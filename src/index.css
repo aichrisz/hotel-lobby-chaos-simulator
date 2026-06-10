@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  /* Hotel Quest RPG palette */
+  --color-parchment: #f6edd9;
+  --color-panel: #fffaf0;
+  --color-ink: #3b2f2f;
+  --color-gold: #d4a017;
+  --color-night: #2c3e66;
+  --color-heart: #e25563;
+  --color-success: #4caf7d;
+  --color-danger: #d9534f;
+
+  --font-display: "Baloo 2 Variable", system-ui, sans-serif;
+  --font-body: "Nunito Variable", system-ui, sans-serif;
+
+  --animate-shake: shake 0.4s ease-in-out;
+  --animate-sparkle-pop: sparkle-pop 0.6s ease-out both;
+  --animate-level-up: level-up 0.8s ease-out both;
+
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-6px);
+    }
+    40% {
+      transform: translateX(6px);
+    }
+    60% {
+      transform: translateX(-4px);
+    }
+    80% {
+      transform: translateX(4px);
+    }
+  }
+
+  @keyframes sparkle-pop {
+    0% {
+      transform: scale(0) rotate(-8deg);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.2) rotate(3deg);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  @keyframes level-up {
+    0% {
+      transform: translateY(12px) scale(0.9);
+      opacity: 0;
+    }
+    50% {
+      transform: translateY(-4px) scale(1.05);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-parchment font-body text-ink antialiased;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shake,
+  .animate-sparkle-pop,
+  .animate-level-up {
+    animation: none;
+  }
+}
