@@ -1,27 +1,32 @@
 import { chromium } from 'playwright'
-import fs from 'node:fs/promises'
 
-const url = 'http://127.0.0.1:5173/'
-const out = '/root/front-office-rpg-shots'
-await fs.mkdir(out, { recursive: true })
-const browser = await chromium.launch({ headless: true })
-const viewports = [
-  ['mobile', { width: 390, height: 844 }],
-  ['tablet', { width: 820, height: 1180 }],
-  ['desktop', { width: 1440, height: 1000 }],
+const baseUrl = process.env.SCREENSHOT_URL ?? 'http://127.0.0.1:5173/'
+
+const shots = [
+  { name: 'mobile-title', width: 390, height: 844, mode: 'title' },
+  { name: 'mobile-desk', width: 390, height: 844, mode: 'desk' },
+  { name: 'mobile-feedback', width: 390, height: 844, mode: 'feedback' },
+  { name: 'desktop-title', width: 1280, height: 900, mode: 'title' },
 ]
-for (const [name, viewport] of viewports) {
-  const page = await browser.newPage({ viewport })
-  await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
-  await page.screenshot({ path: `${out}/${name}.png`, fullPage: true })
-  const markers = await page.evaluate(() => ({
-    title: document.body.innerText.includes('Hotel Quest'),
-    start: document.body.innerText.includes('Start Training'),
-    board: document.body.innerText.includes('Quest Board'),
-    rpg: document.body.innerText.includes('German Front Office RPG Simulator'),
-    width: window.innerWidth,
-  }))
-  console.log(name, JSON.stringify(markers))
+
+const browser = await chromium.launch({ headless: true })
+
+for (const shot of shots) {
+  const page = await browser.newPage({
+    viewport: { width: shot.width, height: shot.height },
+    deviceScaleFactor: 1,
+    isMobile: shot.width < 600,
+  })
+  await page.goto(baseUrl, { waitUntil: 'networkidle' })
+  if (shot.mode === 'desk' || shot.mode === 'feedback') {
+    await page.getByRole('button', { name: /Start Frühschicht/ }).click()
+  }
+  if (shot.mode === 'feedback') {
+    await page.getByRole('button', { name: /Der Kaffee wartet/ }).click()
+  }
+  await page.screenshot({ path: `docs/screenshots/${shot.name}.png`, fullPage: true })
   await page.close()
 }
+
 await browser.close()
+console.log(`screenshots captured from ${baseUrl}`)

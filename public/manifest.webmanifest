@@ -1,0 +1,23 @@
+{
+  "name": "Hotel Lobby Chaos Simulator",
+  "short_name": "Lobby Chaos",
+  "description": "A mobile-first German hotel front-desk chaos simulator for Abel's portfolio.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff8e7",
+  "theme_color": "#4a3428",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
