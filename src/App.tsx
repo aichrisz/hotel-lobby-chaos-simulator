@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { categoryLabels, lobbyScenarios, pressureLabels, type LobbyScenario, type OptionId } from './content/lobbyScenarios'
 import { buildReport, chooseOption, currentScenario, formatClock, initialShiftState, type AnsweredCard, type ShiftState } from './engine/shiftEngine'
 
-type Screen = 'title' | 'desk' | 'report'
+type Screen = 'title' | 'desk' | 'report' | 'caseStudy'
 
 const pressureClass: Record<LobbyScenario['pressure'], string> = {
   low: 'bg-emerald-100 text-emerald-900 ring-emerald-200',
@@ -65,22 +65,28 @@ function App() {
               <h1 className="font-display text-2xl font-black leading-none text-ink md:text-3xl">Lobby Chaos Simulator</h1>
             </div>
           </div>
-          <button type="button" onClick={startShift} className="min-h-11 rounded-2xl bg-wood px-4 font-bold text-cream shadow-lg shadow-wood/20 active:scale-95">
-            Neue Schicht
-          </button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setScreen('caseStudy')} className="hidden min-h-11 rounded-2xl border border-wood/15 bg-white/60 px-4 font-bold text-wood shadow-sm active:scale-95 sm:block">
+              Case Study
+            </button>
+            <button type="button" onClick={startShift} className="min-h-11 rounded-2xl bg-wood px-4 font-bold text-cream shadow-lg shadow-wood/20 active:scale-95">
+              Neue Schicht
+            </button>
+          </div>
         </header>
 
-        {screen === 'title' && <TitleScreen onStart={startShift} />}
+        {screen === 'title' && <TitleScreen onStart={startShift} onCaseStudy={() => setScreen('caseStudy')} />}
         {screen === 'desk' && active && (
           <DeskScreen shift={shift} scenario={active} feedback={feedback} onAnswer={answer} onNext={nextGuest} />
         )}
         {screen === 'report' && <ReportScreen shift={shift} onRestart={startShift} />}
+        {screen === 'caseStudy' && <CaseStudyScreen onStart={startShift} />}
       </div>
     </main>
   )
 }
 
-function TitleScreen({ onStart }: { onStart: () => void }) {
+function TitleScreen({ onStart, onCaseStudy }: { onStart: () => void; onCaseStudy: () => void }) {
   return (
     <section className="grid flex-1 items-center gap-6 py-8 lg:grid-cols-[1fr_0.78fr]">
       <div className="rounded-[2rem] border border-white/80 bg-cream/92 p-6 shadow-2xl shadow-slate-900/15 md:p-10">
@@ -97,9 +103,9 @@ function TitleScreen({ onStart }: { onStart: () => void }) {
           <button type="button" onClick={onStart} className="min-h-14 rounded-2xl bg-brass px-6 font-display text-xl font-black text-ink shadow-xl shadow-brass/25 transition active:scale-95">
             Start Frühschicht
           </button>
-          <a href="https://github.com/AbelChrist" className="grid min-h-14 place-items-center rounded-2xl border border-wood/20 bg-white/55 px-6 font-bold text-wood transition active:scale-95">
-            Portfolio Piece
-          </a>
+          <button type="button" onClick={onCaseStudy} className="grid min-h-14 place-items-center rounded-2xl border border-wood/20 bg-white/55 px-6 font-bold text-wood transition active:scale-95">
+            Read Case Study
+          </button>
         </div>
       </div>
       <aside className="rounded-[2rem] bg-wood p-5 text-cream shadow-2xl shadow-wood/25 md:p-7">
@@ -221,6 +227,72 @@ function ReportScreen({ shift, onRestart }: { shift: ShiftState; onRestart: () =
         </div>
       </div>
     </section>
+  )
+}
+
+function CaseStudyScreen({ onStart }: { onStart: () => void }) {
+  return (
+    <section className="grid flex-1 gap-5 py-6 lg:grid-cols-[0.82fr_1.18fr]">
+      <aside className="rounded-[2rem] bg-wood p-6 text-cream shadow-2xl shadow-wood/25 md:p-8">
+        <p className="text-sm font-black uppercase tracking-[0.22em] text-brass">Portfolio Case Study</p>
+        <h2 className="mt-3 font-display text-5xl font-black leading-[0.95] md:text-6xl">A small game from a real desk problem.</h2>
+        <p className="mt-5 text-lg font-semibold text-cream/80">
+          Hotel Lobby Chaos Simulator turns Abel's Front Office Ausbildung context into a playable, fictional German reception shift.
+        </p>
+        <div className="mt-7 grid gap-3 text-sm font-bold text-cream/82">
+          <p className="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">Role: product idea, scenario design, frontend, testing, deployment.</p>
+          <p className="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">Stack: React, TypeScript, Vite, Tailwind CSS, Vitest, GitHub Pages.</p>
+          <p className="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">Boundary: fictional hotel, no real guest data, no employer-specific procedures.</p>
+        </div>
+        <div className="mt-7 flex flex-col gap-3">
+          <button type="button" onClick={onStart} className="min-h-14 rounded-2xl bg-brass px-6 font-display text-xl font-black text-ink active:scale-95">
+            Play the MVP
+          </button>
+          <a href="https://github.com/aichrisz/hotel-lobby-chaos-simulator" className="grid min-h-14 place-items-center rounded-2xl border border-white/15 bg-white/10 px-6 font-bold text-cream active:scale-95">
+            View GitHub Repo
+          </a>
+        </div>
+      </aside>
+
+      <article className="space-y-5 rounded-[2rem] border border-white/80 bg-cream/95 p-5 shadow-2xl shadow-slate-900/15 md:p-8">
+        <section>
+          <p className="text-sm font-black uppercase tracking-[0.2em] text-brass">Problem</p>
+          <h3 className="mt-2 font-display text-3xl font-black text-ink md:text-4xl">Language practice apps rarely feel like the actual front desk.</h3>
+          <p className="mt-3 font-semibold leading-relaxed text-ink/75">
+            Flashcards can teach vocabulary, but reception work is about timing, tone, pressure, and choosing the least-bad answer while a queue forms behind the guest.
+          </p>
+        </section>
+
+        <section className="grid gap-3 md:grid-cols-3">
+          <CaseCard title="Concept" body="A 3-minute fictional Frühschicht where every guest card creates a tradeoff." />
+          <CaseCard title="Interaction" body="Pick a German response, then see Indonesian feedback explaining why it worked." />
+          <CaseCard title="Outcome" body="A Shift Report grades satisfaction, composure, efficiency, and the chaos survived." />
+        </section>
+
+        <section>
+          <p className="text-sm font-black uppercase tracking-[0.2em] text-brass">What makes it portfolio-worthy</p>
+          <ul className="mt-3 grid gap-3 font-semibold text-ink/78">
+            <li className="rounded-2xl bg-white/70 p-4">It is personal: Indonesian in Germany, Front Office Ausbildung, and German practice in one artifact.</li>
+            <li className="rounded-2xl bg-white/70 p-4">It is scoped: 12 typed scenarios, one shift, no backend, no login, no runtime AI.</li>
+            <li className="rounded-2xl bg-white/70 p-4">It is inspectable: pure shift engine, tests, screenshot script, GitHub Pages deployment.</li>
+          </ul>
+        </section>
+
+        <section className="rounded-[1.5rem] bg-wood p-5 text-cream">
+          <p className="text-sm font-black uppercase tracking-[0.2em] text-brass">Build evidence</p>
+          <pre className="mt-3 whitespace-pre-wrap font-mono text-sm leading-relaxed text-cream/85">{`9 test files passed\n117 tests passed\nGitHub Pages deployment live\nLive smoke: Start Frühschicht → Saubere Lösung.`}</pre>
+        </section>
+      </article>
+    </section>
+  )
+}
+
+function CaseCard({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-2xl bg-white/70 p-4 ring-1 ring-wood/10">
+      <h4 className="font-display text-2xl font-black text-ink">{title}</h4>
+      <p className="mt-2 text-sm font-semibold leading-relaxed text-ink/70">{body}</p>
+    </div>
   )
 }
 

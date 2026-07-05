@@ -26,4 +26,18 @@ describe('App', () => {
     expect(screen.getByText(/Kaffee-Ausgabe: stabil/i)).toBeInTheDocument()
     expect(screen.queryByText(/Express-Check-out/i)).not.toBeInTheDocument()
   })
+
+  it('opens the portfolio case study from the title screen', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /read case study/i }))
+
+    expect(screen.getByRole('heading', { name: /a small game from a real desk problem/i })).toBeInTheDocument()
+    expect(screen.getByText(/React, TypeScript, Vite/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /view github repo/i })).toHaveAttribute(
+      'href',
+      'https://github.com/aichrisz/hotel-lobby-chaos-simulator',
+    )
+  })
 })

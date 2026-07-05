@@ -8,6 +8,12 @@ You play the desk at **Hotel Ostseeblick**: guests arrive with realistic-but-fic
 
 This is a personal portfolio piece for Abel: Indonesian in Germany, Front Office Ausbildung, German practice, and AI-assisted product/design workflow — not another generic to-do app.
 
+## Links
+
+- Live demo: https://aichrisz.github.io/hotel-lobby-chaos-simulator/
+- GitHub repo: https://github.com/aichrisz/hotel-lobby-chaos-simulator
+- Written case study: [`docs/case-study.md`](docs/case-study.md)
+
 ## MVP features
 
 - 12 hand-written fictional hotel scenarios
