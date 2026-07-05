@@ -1,11 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  /* Hotel Quest RPG palette */
+  /* Hotel Lobby Chaos palette */
   --color-parchment: #f6edd9;
   --color-panel: #fffaf0;
+  --color-cream: #fff8e7;
   --color-ink: #3b2f2f;
   --color-gold: #d4a017;
+  --color-brass: #c9932b;
+  --color-wood: #4a3428;
+  --color-coral: #c85f4a;
   --color-night: #2c3e66;
   --color-heart: #e25563;
   --color-success: #4caf7d;
