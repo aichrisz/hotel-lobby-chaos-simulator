@@ -5,6 +5,7 @@ const baseUrl = process.env.SCREENSHOT_URL ?? 'http://127.0.0.1:5173/'
 const shots = [
   { name: 'mobile-title', width: 390, height: 844, mode: 'title' },
   { name: 'mobile-desk', width: 390, height: 844, mode: 'desk' },
+  { name: 'mobile-night-desk', width: 390, height: 844, mode: 'night-desk' },
   { name: 'mobile-feedback', width: 390, height: 844, mode: 'feedback' },
   { name: 'desktop-title', width: 1280, height: 900, mode: 'title' },
 ]
@@ -21,10 +22,13 @@ for (const shot of shots) {
   if (shot.mode === 'desk' || shot.mode === 'feedback') {
     await page.getByRole('button', { name: /Start Frühschicht/ }).click()
   }
+  if (shot.mode === 'night-desk') {
+    await page.getByRole('button', { name: /Start Nachtschicht/ }).click()
+  }
   if (shot.mode === 'feedback') {
     await page.getByRole('button', { name: /Der Kaffee wartet/ }).click()
   }
-  await page.screenshot({ path: `docs/screenshots/${shot.name}.png`, fullPage: true })
+  await page.screenshot({ path: `docs/screenshots/${shot.name}.png`, fullPage: shot.mode !== 'night-desk' })
   await page.close()
 }
 

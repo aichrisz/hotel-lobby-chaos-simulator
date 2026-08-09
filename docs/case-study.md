@@ -5,7 +5,7 @@ Repo: https://github.com/aichrisz/hotel-lobby-chaos-simulator
 
 ## Summary
 
-Hotel Lobby Chaos Simulator is a mobile-first web game about surviving a fictional German hotel front-desk Frühschicht. The player reads a guest situation, chooses a German response, and sees how the choice affects satisfaction, composure, and time.
+Hotel Lobby Chaos Simulator is a mobile-first web game about surviving fictional German hotel front-desk shifts. The player chooses a compact Frühschicht or Nachtschicht, reads a guest situation, chooses a German response, and sees how the choice affects satisfaction, composure, and time.
 
 The project exists because language learning apps often flatten the real problem. At a front desk, the challenge is not only vocabulary. It is timing, tone, pressure, and deciding what to say when the queue is already forming.
 
@@ -35,13 +35,13 @@ The design question was:
 
 ## Solution
 
-A 3-minute compressed Frühschicht:
+A 3-minute compressed shift, with two selectable packs:
 
 1. A guest arrives with a German line.
 2. The player chooses from three German responses.
 3. The app explains the result in Indonesian.
 4. Satisfaction, composure, and the shift clock change.
-5. The run ends with a patch-note-style Shift Report.
+5. The run ends with a patch-note-style Shift Report whose label and count come from the selected pack.
 
 ## Design principles
 
@@ -61,10 +61,12 @@ The scenarios feel like front-office work, but avoid real names, real guests, re
 
 Included:
 
-- 12 typed fictional scenarios
+- 12 typed fictional Frühschicht scenarios
+- exactly 4 typed fictional Nachtschicht scenarios
 - 3 German answer choices per scenario
 - satisfaction / composure / time effects
 - 180-second shift clock
+- the same scoring model for both shift modes
 - immediate feedback panel
 - German school grade style Shift Report
 - achievement flavor
@@ -92,15 +94,15 @@ Intentionally excluded:
 
 ## Engineering notes
 
-The scenarios live as typed static data in `src/content/lobbyScenarios.ts`.
+The scenarios live as typed static data in `src/content/lobbyScenarios.ts` and `src/content/nachtScenarios.ts`.
 
-The shift/game logic lives in pure functions in `src/engine/shiftEngine.ts`, making it easy to test without the UI.
+The shift/game logic lives in pure functions in `src/engine/shiftEngine.ts`. It carries the selected pack through the run, so completion, efficiency, and report metadata do not rely on a hard-coded scenario count.
 
 Verification currently covers:
 
 - app render/start/feedback flow
 - case study screen link
-- 12 scenario data integrity
+- Frühschicht and exactly four Nachtschicht data integrity
 - scoring and shift completion logic
 - build and lint
 - screenshot generation
@@ -108,11 +110,11 @@ Verification currently covers:
 ## Verification evidence
 
 ```text
-npm test      → 9 files passed, 117 tests passed
-npm run lint  → passed
+npm test      → 9 files passed, 124 tests passed
+npm run lint  → ESLint: No issues found
 npm run build → passed
-Live smoke    → Start Frühschicht → first answer → Saubere Lösung
-Console       → 0 JavaScript errors
+npm run screenshots → mobile-title, mobile-desk, mobile-night-desk (390×844), mobile-feedback, desktop-title
+Browser smoke → Frühschicht and Nachtschicht at 390×844 and 1280×844; 0 console errors, no horizontal overflow, answer buttons focusable
 ```
 
 ## Outcome
@@ -129,4 +131,3 @@ It is small, specific, and personal. The value is not that it is a huge app. The
 - add a few animated transition details
 - polish desktop screenshots for portfolio use
 - add a route-based URL for `/case-study` if the app grows
-- optionally add a second mode: Nachtschicht

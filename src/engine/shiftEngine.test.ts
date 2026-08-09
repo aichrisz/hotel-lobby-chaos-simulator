@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { lobbyScenarios } from '../content/lobbyScenarios'
+import { nachtScenarios } from '../content/nachtScenarios'
 import { buildReport, chooseOption, efficiencyFor, formatClock, gradeFor, initialShiftState } from './shiftEngine'
 
 describe('shiftEngine', () => {
@@ -66,5 +67,38 @@ describe('shiftEngine', () => {
     expect(formatClock(180)).toBe('3:00')
     expect(formatClock(5)).toBe('0:05')
     expect(formatClock(-5)).toBe('0:00')
+  })
+
+  it('derives completion and report metadata from the selected Nacht pack', () => {
+    let state = initialShiftState('nacht', nachtScenarios)
+
+    for (const scenario of nachtScenarios) {
+      state = chooseOption(state, scenario.bestOptionId)
+    }
+
+    const report = buildReport(state)
+
+    expect(state.mode).toBe('nacht')
+    expect(state.scenarios).toBe(nachtScenarios)
+    expect(state.done).toBe(true)
+    expect(state.scenarioIndex).toBe(nachtScenarios.length)
+    expect(report.mode).toBe('nacht')
+    expect(report.shiftLabel).toBe('Nachtschicht')
+    expect(report.scenarioCount).toBe(nachtScenarios.length)
+    expect(report.answeredCount).toBe(nachtScenarios.length)
+  })
+
+  it('keeps the baseline clock and score effects for Nacht cards', () => {
+    const scenario = nachtScenarios[0]
+    const option = scenario.options[2]
+    const state = chooseOption(initialShiftState('nacht', nachtScenarios), option.id)
+
+    expect(state.remainingSeconds).toBe(180 - option.effects.timeCostSec)
+    expect(state.satisfaction).toBe(70 + option.effects.satisfaction * 5)
+    expect(state.composure).toBe(100 + option.effects.composure * 5)
+  })
+
+  it('does not start an empty scenario pack', () => {
+    expect(() => initialShiftState('nacht', [])).toThrow(/empty/i)
   })
 })

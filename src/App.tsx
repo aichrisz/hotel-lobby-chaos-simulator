@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { categoryLabels, lobbyScenarios, pressureLabels, type LobbyScenario, type OptionId } from './content/lobbyScenarios'
-import { buildReport, chooseOption, currentScenario, formatClock, initialShiftState, type AnsweredCard, type ShiftState } from './engine/shiftEngine'
+import { categoryLabels, pressureLabels, type LobbyScenario, type OptionId } from './content/lobbyScenarios'
+import { buildReport, chooseOption, currentScenario, formatClock, initialShiftState, type AnsweredCard, type ShiftMode, type ShiftState } from './engine/shiftEngine'
 
 type Screen = 'title' | 'desk' | 'report' | 'caseStudy'
 
@@ -16,6 +16,7 @@ function App() {
   const [shift, setShift] = useState<ShiftState>(() => initialShiftState())
   const [feedback, setFeedback] = useState<AnsweredCard | null>(null)
   const active = feedback?.scenario ?? currentScenario(shift)
+  const isNight = shift.mode === 'nacht' && screen !== 'title' && screen !== 'caseStudy'
 
   useEffect(() => {
     if (screen !== 'desk' || shift.done || feedback) return
@@ -35,8 +36,8 @@ function App() {
     }
   }, [screen, shift.done])
 
-  function startShift() {
-    setShift(initialShiftState())
+  function startShift(mode: ShiftMode = 'frueh') {
+    setShift(initialShiftState(mode))
     setFeedback(null)
     setScreen('desk')
   }
@@ -55,21 +56,21 @@ function App() {
   }
 
   return (
-    <main className="min-h-dvh bg-[radial-gradient(circle_at_top_left,#fff8e7_0,#e8dbc3_42%,#b8c2b2_100%)] text-ink">
+    <main className={isNight ? 'min-h-dvh bg-night text-cream' : 'min-h-dvh bg-[radial-gradient(circle_at_top_left,#fff8e7_0,#e8dbc3_42%,#b8c2b2_100%)] text-ink'}>
       <div className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between gap-3 rounded-[1.75rem] border border-white/70 bg-cream/85 p-3 shadow-xl shadow-slate-900/10 backdrop-blur md:p-4">
+        <header className={`flex items-center justify-between gap-3 rounded-[1.75rem] border p-3 shadow-xl backdrop-blur md:p-4 ${isNight ? 'border-white/10 bg-night/90 shadow-black/20' : 'border-white/70 bg-cream/85 shadow-slate-900/10'}`}>
           <div className="flex items-center gap-3">
             <div className="grid size-12 place-items-center rounded-2xl bg-wood text-2xl text-cream shadow-inner shadow-white/10">🏨</div>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.24em] text-brass">Hotel Ostseeblick</p>
-              <h1 className="font-display text-2xl font-black leading-none text-ink md:text-3xl">Lobby Chaos Simulator</h1>
+              <h1 className={`font-display text-2xl font-black leading-none md:text-3xl ${isNight ? 'text-cream' : 'text-ink'}`}>Lobby Chaos Simulator</h1>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setScreen('caseStudy')} className="hidden min-h-11 rounded-2xl border border-wood/15 bg-white/60 px-4 font-bold text-wood shadow-sm active:scale-95 sm:block">
+            <button type="button" onClick={() => setScreen('caseStudy')} className={`hidden min-h-11 rounded-2xl border px-4 font-bold shadow-sm active:scale-95 sm:block ${isNight ? 'border-white/15 bg-white/10 text-cream' : 'border-wood/15 bg-white/60 text-wood'}`}>
               Case Study
             </button>
-            <button type="button" onClick={startShift} className="min-h-11 rounded-2xl bg-wood px-4 font-bold text-cream shadow-lg shadow-wood/20 active:scale-95">
+            <button type="button" onClick={() => startShift(shift.mode)} className="min-h-11 rounded-2xl bg-wood px-4 font-bold text-cream shadow-lg shadow-wood/20 active:scale-95">
               Neue Schicht
             </button>
           </div>
@@ -79,19 +80,19 @@ function App() {
         {screen === 'desk' && active && (
           <DeskScreen shift={shift} scenario={active} feedback={feedback} onAnswer={answer} onNext={nextGuest} />
         )}
-        {screen === 'report' && <ReportScreen shift={shift} onRestart={startShift} />}
+        {screen === 'report' && <ReportScreen shift={shift} onRestart={() => startShift(shift.mode)} />}
         {screen === 'caseStudy' && <CaseStudyScreen onStart={startShift} />}
       </div>
     </main>
   )
 }
 
-function TitleScreen({ onStart, onCaseStudy }: { onStart: () => void; onCaseStudy: () => void }) {
+function TitleScreen({ onStart, onCaseStudy }: { onStart: (mode: ShiftMode) => void; onCaseStudy: () => void }) {
   return (
     <section className="grid flex-1 items-center gap-6 py-8 lg:grid-cols-[1fr_0.78fr]">
       <div className="rounded-[2rem] border border-white/80 bg-cream/92 p-6 shadow-2xl shadow-slate-900/15 md:p-10">
         <p className="mb-3 inline-flex rounded-full bg-brass/20 px-4 py-2 text-sm font-black text-wood ring-1 ring-brass/30">
-          Frühschicht · 06:00–09:30 · Spielzeit 3:00
+          Frühschicht oder Nachtschicht · Spielzeit 3:00
         </p>
         <h2 className="font-display text-5xl font-black leading-[0.95] text-ink md:text-7xl">
           Calm desk. Chaotic guests.
@@ -100,8 +101,11 @@ function TitleScreen({ onStart, onCaseStudy }: { onStart: () => void; onCaseStud
           Survive a fictional German hotel front desk shift. Pilih jawaban Jerman, jaga tamu tetap tenang, dan jangan kehilangan composure sebelum kopi mesin menyerah duluan.
         </p>
         <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-          <button type="button" onClick={onStart} className="min-h-14 rounded-2xl bg-brass px-6 font-display text-xl font-black text-ink shadow-xl shadow-brass/25 transition active:scale-95">
+          <button type="button" onClick={() => onStart('frueh')} className="min-h-14 rounded-2xl bg-brass px-6 font-display text-xl font-black text-ink shadow-xl shadow-brass/25 transition active:scale-95">
             Start Frühschicht
+          </button>
+          <button type="button" onClick={() => onStart('nacht')} className="min-h-14 rounded-2xl bg-night px-6 font-display text-xl font-black text-cream shadow-xl shadow-night/25 transition active:scale-95">
+            Start Nachtschicht
           </button>
           <button type="button" onClick={onCaseStudy} className="grid min-h-14 place-items-center rounded-2xl border border-wood/20 bg-white/55 px-6 font-bold text-wood transition active:scale-95">
             Read Case Study
@@ -111,7 +115,7 @@ function TitleScreen({ onStart, onCaseStudy }: { onStart: () => void; onCaseStud
       <aside className="rounded-[2rem] bg-wood p-5 text-cream shadow-2xl shadow-wood/25 md:p-7">
         <p className="text-sm font-bold uppercase tracking-[0.22em] text-brass">MVP Rules</p>
         <ul className="mt-4 space-y-3 text-sm font-semibold text-cream/85">
-          <li>• 12 hand-written fictional scenarios.</li>
+          <li>• 12 Frühkarten + 4 Nachtkarten.</li>
           <li>• No login, no backend, no runtime AI.</li>
           <li>• Reception is triage, not perfection.</li>
           <li>• Möwen are a known issue. Status: WONTFIX.</li>
@@ -135,23 +139,24 @@ function DeskScreen({
   onNext: () => void
 }) {
   const bestOption = scenario.options.find((option) => option.id === scenario.bestOptionId)
+  const isNight = shift.mode === 'nacht'
   return (
     <section className="grid flex-1 gap-5 py-6 lg:grid-cols-[300px_1fr]">
-      <aside className="rounded-[2rem] bg-wood p-5 text-cream shadow-2xl shadow-wood/20">
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-brass">Desk HUD</p>
+      <aside className={`rounded-[2rem] p-5 text-cream shadow-2xl shadow-wood/20 ${isNight ? 'bg-night' : 'bg-wood'}`}>
+        <p className="text-sm font-black uppercase tracking-[0.22em] text-brass">{isNight ? 'Nachtschicht HUD' : 'Desk HUD'}</p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Stat label="Clock" value={formatClock(shift.remainingSeconds)} />
-          <Stat label="Guest" value={`${shift.scenarioIndex + 1}/${lobbyScenarios.length}`} />
+          <Stat label="Guest" value={`${shift.scenarioIndex + 1}/${shift.scenarios.length}`} />
           <Stat label="Satisfaction" value={shift.satisfaction} />
           <Stat label="Composure" value={shift.composure} />
         </div>
         <div className="mt-5 rounded-2xl border border-white/10 bg-white/10 p-4 text-sm font-semibold text-cream/80">
-          <p className="font-black text-brass">Known issue</p>
-          <p>Möwen. Printer. PMS freeze. Sometimes all three before breakfast.</p>
+          <p className="font-black text-brass">{isNight ? 'Nacht-Log' : 'Known issue'}</p>
+          <p>{isNight ? 'Flur, Taxi, Kaffeemaschine. Alles klingt nachts lauter.' : 'Möwen. Printer. PMS freeze. Sometimes all three before breakfast.'}</p>
         </div>
       </aside>
 
-      <div className="rounded-[2rem] border border-white/80 bg-cream/95 p-5 shadow-2xl shadow-slate-900/15 md:p-8">
+      <div className={`rounded-[2rem] border p-5 shadow-2xl shadow-slate-900/15 md:p-8 ${isNight ? 'border-white/10 bg-night' : 'border-white/80 bg-cream/95'}`}>
         <div className="mb-5 flex flex-wrap items-center gap-2">
           <span className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ring-1 ${pressureClass[scenario.pressure]}`}>
             {pressureLabels[scenario.pressure]}
@@ -161,8 +166,8 @@ function DeskScreen({
           </span>
         </div>
 
-        <p className="font-bold text-wood/70">Guest line</p>
-        <h2 className="mt-2 font-display text-3xl font-black leading-tight md:text-5xl">{scenario.guestLineDe}</h2>
+        <p className={`font-bold ${isNight ? 'text-brass/80' : 'text-wood/70'}`}>Guest line</p>
+        <h2 className={`mt-2 font-display text-3xl font-black leading-tight md:text-5xl ${isNight ? 'text-cream' : 'text-ink'}`}>{scenario.guestLineDe}</h2>
         <p className="mt-4 rounded-2xl bg-white/70 p-4 text-sm font-semibold text-ink/75">{scenario.situationId}</p>
 
         {!feedback ? (
@@ -196,14 +201,15 @@ function DeskScreen({
 
 function ReportScreen({ shift, onRestart }: { shift: ShiftState; onRestart: () => void }) {
   const report = buildReport(shift)
+  const isNight = shift.mode === 'nacht'
   return (
     <section className="grid flex-1 place-items-center py-8">
-      <div className="w-full max-w-4xl rounded-[2rem] border border-white/80 bg-cream p-6 shadow-2xl shadow-wood/20 md:p-10">
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-brass">Hotel Ostseeblick — Frühschicht Patch Notes</p>
+      <div className={`w-full max-w-4xl rounded-[2rem] border p-6 shadow-2xl shadow-wood/20 md:p-10 ${isNight ? 'border-white/10 bg-night text-cream' : 'border-white/80 bg-cream'}`}>
+        <p className="text-sm font-black uppercase tracking-[0.22em] text-brass">Hotel Ostseeblick — {report.shiftLabel} Patch Notes</p>
         <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="font-display text-5xl font-black">Note {report.grade}</h2>
-            <p className="font-semibold text-ink/70">{report.answeredCount}/{lobbyScenarios.length} Gäste bearbeitet · Final score {report.finalScore}</p>
+            <p className={isNight ? 'font-semibold text-cream/70' : 'font-semibold text-ink/70'}>{report.answeredCount}/{report.scenarioCount} Gäste bearbeitet · Final score {report.finalScore}</p>
           </div>
           <div className="rounded-2xl bg-wood p-4 text-cream">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-brass">Achievement</p>
@@ -218,7 +224,7 @@ function ReportScreen({ shift, onRestart }: { shift: ShiftState; onRestart: () =
           <ReportStat label="Effizienz" value={report.efficiency} />
         </div>
 
-        <pre className="mt-6 whitespace-pre-wrap rounded-[1.5rem] bg-wood p-5 font-mono text-sm leading-relaxed text-cream shadow-inner shadow-black/20">{`NEU IN DIESER SCHICHT\n+ Erfahrung gesammelt. Viel Erfahrung.\n\nBEHOBEN\n${report.patchLines.map((line) => `✓ ${line}`).join('\n')}\n\nBEKANNTE FEHLER\n– Möwen. Weiterhin. Status: WONTFIX.\n\nSTATS\nGästezufriedenheit ${report.satisfaction} · Fassung ${report.composure} · Effizienz ${report.efficiency}`}</pre>
+        <pre className="mt-6 whitespace-pre-wrap rounded-[1.5rem] bg-wood p-5 font-mono text-sm leading-relaxed text-cream shadow-inner shadow-black/20">{`NEU IN DIESER SCHICHT\n+ Erfahrung gesammelt. Viel Erfahrung.\n\nBEHOBEN\n${report.patchLines.map((line) => `✓ ${line}`).join('\n')}\n\nBEKANNTE FEHLER\n${isNight ? '– 03:00-Kaffee. Weiterhin persönlich nehmen.' : '– Möwen. Weiterhin. Status: WONTFIX.'}\n\nSTATS\nGästezufriedenheit ${report.satisfaction} · Fassung ${report.composure} · Effizienz ${report.efficiency}`}</pre>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button type="button" onClick={onRestart} className="min-h-14 rounded-2xl bg-brass px-6 font-display text-xl font-black text-ink active:scale-95">
@@ -230,7 +236,7 @@ function ReportScreen({ shift, onRestart }: { shift: ShiftState; onRestart: () =
   )
 }
 
-function CaseStudyScreen({ onStart }: { onStart: () => void }) {
+function CaseStudyScreen({ onStart }: { onStart: (mode: ShiftMode) => void }) {
   return (
     <section className="grid flex-1 gap-5 py-6 lg:grid-cols-[0.82fr_1.18fr]">
       <aside className="rounded-[2rem] bg-wood p-6 text-cream shadow-2xl shadow-wood/25 md:p-8">
@@ -245,7 +251,7 @@ function CaseStudyScreen({ onStart }: { onStart: () => void }) {
           <p className="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">Boundary: fictional hotel, no real guest data, no employer-specific procedures.</p>
         </div>
         <div className="mt-7 flex flex-col gap-3">
-          <button type="button" onClick={onStart} className="min-h-14 rounded-2xl bg-brass px-6 font-display text-xl font-black text-ink active:scale-95">
+          <button type="button" onClick={() => onStart('frueh')} className="min-h-14 rounded-2xl bg-brass px-6 font-display text-xl font-black text-ink active:scale-95">
             Play the MVP
           </button>
           <a href="https://github.com/aichrisz/hotel-lobby-chaos-simulator" className="grid min-h-14 place-items-center rounded-2xl border border-white/15 bg-white/10 px-6 font-bold text-cream active:scale-95">
@@ -273,14 +279,14 @@ function CaseStudyScreen({ onStart }: { onStart: () => void }) {
           <p className="text-sm font-black uppercase tracking-[0.2em] text-brass">What makes it portfolio-worthy</p>
           <ul className="mt-3 grid gap-3 font-semibold text-ink/78">
             <li className="rounded-2xl bg-white/70 p-4">It is personal: Indonesian in Germany, Front Office Ausbildung, and German practice in one artifact.</li>
-            <li className="rounded-2xl bg-white/70 p-4">It is scoped: 12 typed scenarios, one shift, no backend, no login, no runtime AI.</li>
+            <li className="rounded-2xl bg-white/70 p-4">It is scoped: 12 Frühkarten + exactly 4 Nachtkarten, two compact shifts, no backend, no login, no runtime AI.</li>
             <li className="rounded-2xl bg-white/70 p-4">It is inspectable: pure shift engine, tests, screenshot script, GitHub Pages deployment.</li>
           </ul>
         </section>
 
         <section className="rounded-[1.5rem] bg-wood p-5 text-cream">
           <p className="text-sm font-black uppercase tracking-[0.2em] text-brass">Build evidence</p>
-          <pre className="mt-3 whitespace-pre-wrap font-mono text-sm leading-relaxed text-cream/85">{`9 test files passed\n117 tests passed\nGitHub Pages deployment live\nLive smoke: Start Frühschicht → Saubere Lösung.`}</pre>
+          <pre className="mt-3 whitespace-pre-wrap font-mono text-sm leading-relaxed text-cream/85">{`12 Frühkarten + 4 Nachtkarten\nSame 180-second clock and scoring model\nPure pack-aware shift engine\nNo real hotel data or employer procedures`}</pre>
         </section>
       </article>
     </section>

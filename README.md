@@ -1,8 +1,8 @@
 # Hotel Lobby Chaos Simulator
 
-A mobile-first portfolio game about surviving a fictional German hotel front-desk Frühschicht.
+A mobile-first portfolio game about surviving fictional German hotel front-desk shifts: Frühschicht or compact Nachtschicht.
 
-You play the desk at **Hotel Ostseeblick**: guests arrive with realistic-but-fictional hospitality chaos, you choose German responses, and every answer affects satisfaction, composure, and the shift clock. The end screen turns the run into a Life-Patch-Notes-style shift report.
+You play the desk at **Hotel Ostseeblick**: guests arrive with realistic-but-fictional hospitality chaos, you choose German responses, and every answer affects satisfaction, composure, and the 180-second shift clock. The end screen turns the run into a Life-Patch-Notes-style shift report.
 
 ## Why this project exists
 
@@ -16,9 +16,9 @@ This is a personal portfolio piece for Abel: Indonesian in Germany, Front Office
 
 ## MVP features
 
-- 12 hand-written fictional hotel scenarios
+- 12 hand-written Frühschicht scenarios + exactly 4 compact Nachtschicht scenarios
 - German response choices with Indonesian explanations
-- 180-second shift clock
+- two shift modes using the same 180-second clock and scoring rules
 - satisfaction / composure / efficiency scoring
 - German school grade report
 - achievement unlock flavor
@@ -60,7 +60,7 @@ npm run screenshots
 | `npm run lint` | Run ESLint |
 | `npm run build` | Type-check (`tsc -b`) and build production bundle |
 | `npm run preview` | Serve production build locally |
-| `npm run screenshots` | Capture mobile/desktop screenshots into `docs/screenshots/` |
+| `npm run screenshots` | Capture mobile/desktop Frühschicht and Nachtschicht screenshots into `docs/screenshots/` |
 
 ## Privacy / domain boundary
 

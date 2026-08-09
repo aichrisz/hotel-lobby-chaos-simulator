@@ -1,9 +1,21 @@
 import { lobbyScenarios, type LobbyScenario, type OptionId, type ResponseOption } from '../content/lobbyScenarios'
+import { nachtScenarios } from '../content/nachtScenarios'
 
 export const SHIFT_SECONDS = 180
 export const START_SATISFACTION = 70
 export const START_COMPOSURE = 100
 export const EFFECT_MULTIPLIER = 5
+
+export type ShiftMode = 'frueh' | 'nacht'
+
+export const shiftLabels: Record<ShiftMode, string> = {
+  frueh: 'Frühschicht',
+  nacht: 'Nachtschicht',
+}
+
+export function scenarioPackForMode(mode: ShiftMode): LobbyScenario[] {
+  return mode === 'nacht' ? nachtScenarios : lobbyScenarios
+}
 
 export interface AnsweredCard {
   scenario: LobbyScenario
@@ -15,6 +27,8 @@ export interface AnsweredCard {
 }
 
 export interface ShiftState {
+  mode: ShiftMode
+  scenarios: LobbyScenario[]
   scenarioIndex: number
   remainingSeconds: number
   satisfaction: number
@@ -24,6 +38,9 @@ export interface ShiftState {
 }
 
 export interface ShiftReport {
+  mode: ShiftMode
+  shiftLabel: string
+  scenarioCount: number
   satisfaction: number
   composure: number
   efficiency: number
@@ -44,8 +61,11 @@ export function clamp(value: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, value))
 }
 
-export function initialShiftState(): ShiftState {
+export function initialShiftState(mode: ShiftMode = 'frueh', scenarios = scenarioPackForMode(mode)): ShiftState {
+  if (scenarios.length === 0) throw new Error('Cannot start a shift with an empty scenario pack')
   return {
+    mode,
+    scenarios,
     scenarioIndex: 0,
     remainingSeconds: SHIFT_SECONDS,
     satisfaction: START_SATISFACTION,
@@ -56,7 +76,7 @@ export function initialShiftState(): ShiftState {
 }
 
 export function currentScenario(state: ShiftState): LobbyScenario | undefined {
-  return state.done ? undefined : lobbyScenarios[state.scenarioIndex]
+  return state.done ? undefined : state.scenarios[state.scenarioIndex]
 }
 
 export function chooseOption(state: ShiftState, optionId: OptionId): ShiftState {
@@ -80,9 +100,11 @@ export function chooseOption(state: ShiftState, optionId: OptionId): ShiftState 
     },
   ]
   const nextIndex = state.scenarioIndex + 1
-  const done = nextIndex >= lobbyScenarios.length || remainingSeconds <= 0
+  const done = nextIndex >= state.scenarios.length || remainingSeconds <= 0
 
   return {
+    mode: state.mode,
+    scenarios: state.scenarios,
     scenarioIndex: nextIndex,
     remainingSeconds,
     satisfaction,
@@ -108,7 +130,7 @@ export function gradeFor(finalScore: number): ShiftReport['grade'] {
 }
 
 export function buildReport(state: ShiftState): ShiftReport {
-  const efficiency = efficiencyFor(state.answered)
+  const efficiency = efficiencyFor(state.answered, state.scenarios.length)
   const finalScore = Math.round(state.satisfaction * 0.4 + state.composure * 0.3 + efficiency * 0.3)
   const grade = gradeFor(finalScore)
   const achievement = achievementFor(state, grade)
@@ -116,6 +138,9 @@ export function buildReport(state: ShiftState): ShiftReport {
   const patchLines = bestLines.length > 0 ? bestLines : ['Erfahrung gesammelt. Viel Erfahrung.']
 
   return {
+    mode: state.mode,
+    shiftLabel: shiftLabels[state.mode],
+    scenarioCount: state.scenarios.length,
     satisfaction: state.satisfaction,
     composure: state.composure,
     efficiency,
