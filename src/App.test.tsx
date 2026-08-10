@@ -23,7 +23,9 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: /Der Kaffee wartet/i }))
 
-    expect(screen.getByRole('heading', { name: /Saubere Lösung/i })).toBeInTheDocument()
+    const feedbackHeading = screen.getByRole('heading', { name: /Saubere Lösung/i })
+    expect(feedbackHeading).toBeInTheDocument()
+    expect(feedbackHeading.parentElement).toHaveClass('text-ink')
     expect(screen.getByText(/Kaffee-Ausgabe: stabil/i)).toBeInTheDocument()
     expect(screen.queryByText(/Express-Check-out/i)).not.toBeInTheDocument()
   })

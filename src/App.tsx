@@ -180,7 +180,7 @@ function DeskScreen({
             ))}
           </div>
         ) : (
-          <div className={`mt-6 rounded-[1.5rem] border p-5 ${feedback.wasBest ? 'border-emerald-200 bg-emerald-50' : 'border-coral/20 bg-coral/10'}`}>
+          <div className={`mt-6 rounded-[1.5rem] border p-5 text-ink ${feedback.wasBest ? 'border-emerald-200 bg-emerald-50' : 'border-coral/20 bg-coral/10'}`}>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-wood/60">Feedback</p>
             <h3 className="mt-1 font-display text-3xl font-black">{feedback.wasBest ? 'Saubere Lösung.' : 'Bisa, tapi ada patch yang lebih aman.'}</h3>
             <p className="mt-3 font-semibold text-ink/80">{scenario.rationaleId}</p>
