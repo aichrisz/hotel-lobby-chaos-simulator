@@ -158,7 +158,7 @@ function DeskScreen({
 
       <div className={`rounded-[2rem] border p-5 shadow-2xl shadow-slate-900/15 md:p-8 ${isNight ? 'border-white/10 bg-night' : 'border-white/80 bg-cream/95'}`}>
         <div className="mb-5 flex flex-wrap items-center gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ring-1 ${pressureClass[scenario.pressure]}`}>
+          <span className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ring-1 ${isNight && scenario.pressure === 'high' ? 'bg-coral/15 text-cream ring-coral/25' : pressureClass[scenario.pressure]}`}>
             {pressureLabels[scenario.pressure]}
           </span>
           <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-wood ring-1 ring-wood/10">

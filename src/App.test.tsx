@@ -42,6 +42,19 @@ describe('App', () => {
     expect(screen.getByText(/Nacht-Log/i)).toBeInTheDocument()
   })
 
+  it('uses an accessible Nacht badge pair for high-pressure guests', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /start nachtschicht/i }))
+    await user.click(screen.getByRole('button', { name: /^A\./ }))
+    await user.click(screen.getByRole('button', { name: /next guest/i }))
+
+    const urgentBadge = screen.getByText('dringend')
+    expect(urgentBadge).toHaveClass('bg-coral/15', 'text-cream', 'ring-coral/25')
+    expect(urgentBadge).not.toHaveClass('text-coral')
+  })
+
   it('uses the Nacht label and count in the Shift Report', async () => {
     const user = userEvent.setup()
     render(<App />)
