@@ -1,6 +1,6 @@
 # Hotel Lobby Chaos Simulator
 
-A mobile-first portfolio game about surviving fictional German hotel front-desk shifts: Frühschicht or compact Nachtschicht.
+A mobile-first portfolio game about surviving fictional German hotel front-desk shifts: Frühschicht, compact Nachtschicht, or the optional two-encounter Mini-Schicht: Das Versprechen.
 
 You play the desk at **Hotel Ostseeblick**: guests arrive with realistic-but-fictional hospitality chaos, you choose German responses, and every answer affects satisfaction, composure, and the 180-second shift clock. The end screen turns the run into a Life-Patch-Notes-style shift report.
 
@@ -17,8 +17,9 @@ This is a personal portfolio piece for Abel: Indonesian in Germany, Front Office
 ## MVP features
 
 - 12 hand-written Frühschicht scenarios + exactly 4 compact Nachtschicht scenarios
+- optional Mini-Schicht: Das Versprechen, with two encounters for the same guest and two consequence paths
 - German response choices with Indonesian explanations
-- two shift modes using the same 180-second clock and scoring rules
+- all modes reuse the 180-second clock and scoring rules
 - satisfaction / composure / efficiency scoring
 - German school grade report
 - achievement unlock flavor
@@ -50,6 +51,16 @@ npm run build
 npm run screenshots
 ```
 
+If Node exposes experimental global Web Storage that conflicts with Vitest/jsdom, run tests with `NODE_OPTIONS=--no-experimental-webstorage npm test` to disable that Node global.
+
+For the production browser regression check, after a build start `npm run preview -- --host 127.0.0.1`, then run:
+
+```bash
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173/ node scripts/promise-smoke.mjs
+```
+
+The script checks all three initial choices at 390×844 and 320×740, the existing shifts on desktop, visible 44px buttons, overflow, and browser errors. Screenshots default to the OS temp directory (`hotel-promise-qa`); override it with `PROMISE_QA_OUTPUT_DIR=/path/to/output`. To select a system Chromium executable, optionally set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium`.
+
 ## Scripts
 
 | Script | What it does |
@@ -61,6 +72,7 @@ npm run screenshots
 | `npm run build` | Type-check (`tsc -b`) and build production bundle |
 | `npm run preview` | Serve production build locally |
 | `npm run screenshots` | Capture mobile/desktop Frühschicht and Nachtschicht screenshots into `docs/screenshots/` |
+| `node scripts/promise-smoke.mjs` | Production browser regression for promise branches and existing modes |
 
 ## Privacy / domain boundary
 

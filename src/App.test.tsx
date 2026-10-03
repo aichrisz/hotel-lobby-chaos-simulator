@@ -70,6 +70,46 @@ describe('App', () => {
     expect(screen.getByText(/4\/4 Gäste bearbeitet/i)).toBeInTheDocument()
   })
 
+  it('plays the promise mini-shift through feedback, returning guest, report, and restart', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /mini-schicht.*versprechen/i }))
+    expect(screen.getByText(/Mini-Schicht HUD/i)).toBeInTheDocument()
+    expect(screen.getByText(/Begegnung/i)).toBeInTheDocument()
+    expect(screen.getByText('dringend')).toHaveClass('text-ink')
+    expect(screen.getByText(/1\/2/)).toBeInTheDocument()
+    expect(screen.getByText(/Können Sie mir versprechen/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /10:30 Uhr Bescheid/i }))
+    expect(screen.getByText('1/2')).toBeInTheDocument()
+    expect(screen.queryByText('3/2')).not.toBeInTheDocument()
+    expect(screen.getByText(/janji yang terbatas/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Ich bin wieder da/i)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /weiter mit demselben gast/i }))
+    expect(screen.getByText(/Ich bin wieder da/i)).toBeInTheDocument()
+    expect(screen.getByText('2/2')).toBeInTheDocument()
+    expect(screen.queryByText('3/2')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /ich prüfe den aktuellen stand/i }))
+    expect(screen.getByText('2/2')).toBeInTheDocument()
+    expect(screen.queryByText('3/2')).not.toBeInTheDocument()
+    expect(screen.getByText(/kamu menepati janji untuk memberi kabar/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /zur schichtauswertung/i })).toBeInTheDocument()
+    expect(screen.queryByText(/2\/2 Begegnungen bearbeitet/i)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /zur schichtauswertung/i }))
+    expect(screen.getByText(/mini-schicht: das versprechen patch notes/i)).toBeInTheDocument()
+    expect(screen.getByText(/2\/2 Begegnungen bearbeitet/i)).toBeInTheDocument()
+    expect(screen.getByText(/Zimmerstatus\. Ohne Prüfung keine Versprechen/i)).toBeInTheDocument()
+
+    await user.click(screen.getAllByRole('button', { name: /neue schicht/i }).at(-1)!)
+    expect(screen.getByText(/Können Sie mir versprechen/i)).toBeInTheDocument()
+    expect(screen.getByText(/1\/2/)).toBeInTheDocument()
+    expect(screen.queryByText(/Feedback/i)).not.toBeInTheDocument()
+  })
+
   it('opens the portfolio case study from the title screen', async () => {
     const user = userEvent.setup()
     render(<App />)

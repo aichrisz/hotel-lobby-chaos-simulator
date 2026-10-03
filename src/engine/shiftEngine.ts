@@ -1,20 +1,24 @@
 import { lobbyScenarios, type LobbyScenario, type OptionId, type ResponseOption } from '../content/lobbyScenarios'
 import { nachtScenarios } from '../content/nachtScenarios'
+import { promiseFollowupByOption, promiseScenarios } from '../content/promiseScenarios'
 
 export const SHIFT_SECONDS = 180
 export const START_SATISFACTION = 70
 export const START_COMPOSURE = 100
 export const EFFECT_MULTIPLIER = 5
 
-export type ShiftMode = 'frueh' | 'nacht'
+export type ShiftMode = 'frueh' | 'nacht' | 'promise'
 
 export const shiftLabels: Record<ShiftMode, string> = {
   frueh: 'Frühschicht',
   nacht: 'Nachtschicht',
+  promise: 'Mini-Schicht: Das Versprechen',
 }
 
 export function scenarioPackForMode(mode: ShiftMode): LobbyScenario[] {
-  return mode === 'nacht' ? nachtScenarios : lobbyScenarios
+  if (mode === 'nacht') return nachtScenarios
+  if (mode === 'promise') return promiseScenarios
+  return lobbyScenarios
 }
 
 export interface AnsweredCard {
@@ -99,12 +103,15 @@ export function chooseOption(state: ShiftState, optionId: OptionId): ShiftState 
       remainingSecondsAfter: remainingSeconds,
     },
   ]
+  const scenarios = state.mode === 'promise' && state.scenarioIndex === 0
+    ? [scenario, promiseFollowupByOption[optionId]]
+    : state.scenarios
   const nextIndex = state.scenarioIndex + 1
-  const done = nextIndex >= state.scenarios.length || remainingSeconds <= 0
+  const done = nextIndex >= scenarios.length || remainingSeconds <= 0
 
   return {
     mode: state.mode,
-    scenarios: state.scenarios,
+    scenarios,
     scenarioIndex: nextIndex,
     remainingSeconds,
     satisfaction,

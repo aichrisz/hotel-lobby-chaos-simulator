@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { lobbyScenarios } from '../content/lobbyScenarios'
+import { lobbyScenarios, type OptionId } from '../content/lobbyScenarios'
 import { nachtScenarios } from '../content/nachtScenarios'
-import { buildReport, chooseOption, efficiencyFor, formatClock, gradeFor, initialShiftState } from './shiftEngine'
+import { buildReport, chooseOption, currentScenario, efficiencyFor, formatClock, gradeFor, initialShiftState } from './shiftEngine'
 
 describe('shiftEngine', () => {
   it('starts at the Hotel Lobby Chaos Simulator baseline', () => {
@@ -100,5 +100,67 @@ describe('shiftEngine', () => {
 
   it('does not start an empty scenario pack', () => {
     expect(() => initialShiftState('nacht', [])).toThrow(/empty/i)
+  })
+
+  it('routes each promise choice to exactly one authored returning-guest card', () => {
+    const followupByChoice = {
+      a: 'promise-return-manageable',
+      b: 'promise-return-upset',
+      c: 'promise-return-upset',
+    } as const
+
+    for (const [choice, followupId] of Object.entries(followupByChoice)) {
+      const first = initialShiftState('promise')
+      const afterFirst = chooseOption(first, choice as 'a' | 'b' | 'c')
+
+      expect(afterFirst.mode).toBe('promise')
+      expect(afterFirst.scenarioIndex).toBe(1)
+      expect(afterFirst.scenarios).toHaveLength(2)
+      expect(afterFirst.scenarios[0].id).toBe('promise-guest-start')
+      expect(afterFirst.scenarios[1].id).toBe(followupId)
+      expect(currentScenario(afterFirst)?.id).toBe(followupId)
+      expect(afterFirst.done).toBe(false)
+
+      const finished = chooseOption(afterFirst, currentScenario(afterFirst)!.bestOptionId)
+      const report = buildReport(finished)
+      expect(finished.done).toBe(true)
+      expect(finished.answered).toHaveLength(2)
+      expect(report.shiftLabel).toBe('Mini-Schicht: Das Versprechen')
+      expect(report.scenarioCount).toBe(2)
+      expect(report.answeredCount).toBe(2)
+    }
+  })
+
+  it('keeps promise restarts fresh and ends safely when the clock runs out', () => {
+    const first = initialShiftState('promise')
+    const exhausted = chooseOption({ ...first, remainingSeconds: 1 }, 'a')
+    const report = buildReport(exhausted)
+
+    expect(exhausted.done).toBe(true)
+    expect(exhausted.remainingSeconds).toBe(0)
+    expect(exhausted.answered).toHaveLength(1)
+    expect(exhausted.scenarios[1].id).toBe('promise-return-manageable')
+    expect(report.scenarioCount).toBe(2)
+    expect(report.answeredCount).toBe(1)
+
+    const restarted = initialShiftState('promise')
+    expect(restarted).toMatchObject({
+      scenarioIndex: 0,
+      remainingSeconds: 180,
+      satisfaction: 70,
+      composure: 100,
+      answered: [],
+      done: false,
+    })
+    expect(restarted.scenarios[0].id).toBe('promise-guest-start')
+  })
+
+  it('ignores invalid and already-completed promise answers', () => {
+    const first = initialShiftState('promise')
+    expect(chooseOption(first, 'invalid' as OptionId)).toBe(first)
+
+    const afterFirst = chooseOption(first, 'a')
+    const finished = chooseOption(afterFirst, currentScenario(afterFirst)!.bestOptionId)
+    expect(chooseOption(finished, 'a')).toBe(finished)
   })
 })

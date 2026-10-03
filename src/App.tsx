@@ -31,10 +31,10 @@ function App() {
   }, [feedback, screen, shift.done])
 
   useEffect(() => {
-    if (screen === 'desk' && shift.done) {
+    if (screen === 'desk' && shift.done && !(shift.mode === 'promise' && feedback)) {
       setScreen('report')
     }
-  }, [screen, shift.done])
+  }, [feedback, screen, shift.done, shift.mode])
 
   function startShift(mode: ShiftMode = 'frueh') {
     setShift(initialShiftState(mode))
@@ -92,7 +92,7 @@ function TitleScreen({ onStart, onCaseStudy }: { onStart: (mode: ShiftMode) => v
     <section className="grid flex-1 items-center gap-6 py-8 lg:grid-cols-[1fr_0.78fr]">
       <div className="rounded-[2rem] border border-white/80 bg-cream/92 p-6 shadow-2xl shadow-slate-900/15 md:p-10">
         <p className="mb-3 inline-flex rounded-full bg-brass/20 px-4 py-2 text-sm font-black text-wood ring-1 ring-brass/30">
-          Frühschicht oder Nachtschicht · Spielzeit 3:00
+          Frühschicht, Nachtschicht oder Mini-Schicht · Spielzeit 3:00
         </p>
         <h2 className="font-display text-5xl font-black leading-[0.95] text-ink md:text-7xl">
           Calm desk. Chaotic guests.
@@ -106,6 +106,9 @@ function TitleScreen({ onStart, onCaseStudy }: { onStart: (mode: ShiftMode) => v
           </button>
           <button type="button" onClick={() => onStart('nacht')} className="min-h-14 rounded-2xl bg-night px-6 font-display text-xl font-black text-cream shadow-xl shadow-night/25 transition active:scale-95">
             Start Nachtschicht
+          </button>
+          <button type="button" onClick={() => onStart('promise')} className="min-h-14 rounded-2xl border border-wood/20 bg-white/70 px-6 font-display text-xl font-black text-wood shadow transition active:scale-95">
+            Mini-Schicht: Das Versprechen
           </button>
           <button type="button" onClick={onCaseStudy} className="grid min-h-14 place-items-center rounded-2xl border border-wood/20 bg-white/55 px-6 font-bold text-wood transition active:scale-95">
             Read Case Study
@@ -140,25 +143,31 @@ function DeskScreen({
 }) {
   const bestOption = scenario.options.find((option) => option.id === scenario.bestOptionId)
   const isNight = shift.mode === 'nacht'
+  const isPromise = shift.mode === 'promise'
+  const pressureBadgeClass = isPromise && scenario.pressure === 'high'
+    ? 'bg-coral/15 text-ink ring-coral/25'
+    : isNight && scenario.pressure === 'high'
+      ? 'bg-coral/15 text-cream ring-coral/25'
+      : pressureClass[scenario.pressure]
   return (
     <section className="grid flex-1 gap-5 py-6 lg:grid-cols-[300px_1fr]">
       <aside className={`rounded-[2rem] p-5 text-cream shadow-2xl shadow-wood/20 ${isNight ? 'bg-night' : 'bg-wood'}`}>
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-brass">{isNight ? 'Nachtschicht HUD' : 'Desk HUD'}</p>
+        <p className="text-sm font-black uppercase tracking-[0.22em] text-brass">{isNight ? 'Nachtschicht HUD' : isPromise ? 'Mini-Schicht HUD' : 'Desk HUD'}</p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Stat label="Clock" value={formatClock(shift.remainingSeconds)} />
-          <Stat label="Guest" value={`${shift.scenarioIndex + 1}/${shift.scenarios.length}`} />
+          <Stat label={shift.mode === 'promise' ? 'Begegnung' : 'Guest'} value={`${feedback ? shift.answered.length : shift.scenarioIndex + 1}/${shift.scenarios.length}`} />
           <Stat label="Satisfaction" value={shift.satisfaction} />
           <Stat label="Composure" value={shift.composure} />
         </div>
         <div className="mt-5 rounded-2xl border border-white/10 bg-white/10 p-4 text-sm font-semibold text-cream/80">
-          <p className="font-black text-brass">{isNight ? 'Nacht-Log' : 'Known issue'}</p>
-          <p>{isNight ? 'Flur, Taxi, Kaffeemaschine. Alles klingt nachts lauter.' : 'Möwen. Printer. PMS freeze. Sometimes all three before breakfast.'}</p>
+          <p className="font-black text-brass">{isNight ? 'Nacht-Log' : isPromise ? 'Versprechen-Log' : 'Known issue'}</p>
+          <p>{isNight ? 'Flur, Taxi, Kaffeemaschine. Alles klingt nachts lauter.' : isPromise ? 'Status prüfen, dann einen bestätigten nächsten Schritt nennen.' : 'Möwen. Printer. PMS freeze. Sometimes all three before breakfast.'}</p>
         </div>
       </aside>
 
       <div className={`rounded-[2rem] border p-5 shadow-2xl shadow-slate-900/15 md:p-8 ${isNight ? 'border-white/10 bg-night' : 'border-white/80 bg-cream/95'}`}>
         <div className="mb-5 flex flex-wrap items-center gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ring-1 ${isNight && scenario.pressure === 'high' ? 'bg-coral/15 text-cream ring-coral/25' : pressureClass[scenario.pressure]}`}>
+          <span className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ring-1 ${pressureBadgeClass}`}>
             {pressureLabels[scenario.pressure]}
           </span>
           <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-wood ring-1 ring-wood/10">
@@ -190,7 +199,7 @@ function DeskScreen({
             </div>
             <p className="mt-4 rounded-2xl bg-wood p-4 font-mono text-sm text-cream">{scenario.shiftReportLine}</p>
             <button type="button" onClick={onNext} className="mt-5 min-h-14 w-full rounded-2xl bg-brass px-6 font-display text-xl font-black text-ink active:scale-95">
-              {shift.done ? 'Zur Schichtauswertung' : 'Next guest'}
+              {shift.done ? 'Zur Schichtauswertung' : shift.mode === 'promise' ? 'Weiter mit demselben Gast' : 'Next guest'}
             </button>
           </div>
         )}
@@ -202,6 +211,11 @@ function DeskScreen({
 function ReportScreen({ shift, onRestart }: { shift: ShiftState; onRestart: () => void }) {
   const report = buildReport(shift)
   const isNight = shift.mode === 'nacht'
+  const knownIssues = shift.mode === 'promise'
+    ? '– Zimmerstatus. Ohne Prüfung keine Versprechen.'
+    : isNight
+      ? '– 03:00-Kaffee. Weiterhin persönlich nehmen.'
+      : '– Möwen. Weiterhin. Status: WONTFIX.'
   return (
     <section className="grid flex-1 place-items-center py-8">
       <div className={`w-full max-w-4xl rounded-[2rem] border p-6 shadow-2xl shadow-wood/20 md:p-10 ${isNight ? 'border-white/10 bg-night text-cream' : 'border-white/80 bg-cream'}`}>
@@ -209,7 +223,7 @@ function ReportScreen({ shift, onRestart }: { shift: ShiftState; onRestart: () =
         <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="font-display text-5xl font-black">Note {report.grade}</h2>
-            <p className={isNight ? 'font-semibold text-cream/70' : 'font-semibold text-ink/70'}>{report.answeredCount}/{report.scenarioCount} Gäste bearbeitet · Final score {report.finalScore}</p>
+            <p className={isNight ? 'font-semibold text-cream/70' : 'font-semibold text-ink/70'}>{report.answeredCount}/{report.scenarioCount} {shift.mode === 'promise' ? 'Begegnungen' : 'Gäste'} bearbeitet · Final score {report.finalScore}</p>
           </div>
           <div className="rounded-2xl bg-wood p-4 text-cream">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-brass">Achievement</p>
@@ -224,7 +238,7 @@ function ReportScreen({ shift, onRestart }: { shift: ShiftState; onRestart: () =
           <ReportStat label="Effizienz" value={report.efficiency} />
         </div>
 
-        <pre className="mt-6 whitespace-pre-wrap rounded-[1.5rem] bg-wood p-5 font-mono text-sm leading-relaxed text-cream shadow-inner shadow-black/20">{`NEU IN DIESER SCHICHT\n+ Erfahrung gesammelt. Viel Erfahrung.\n\nBEHOBEN\n${report.patchLines.map((line) => `✓ ${line}`).join('\n')}\n\nBEKANNTE FEHLER\n${isNight ? '– 03:00-Kaffee. Weiterhin persönlich nehmen.' : '– Möwen. Weiterhin. Status: WONTFIX.'}\n\nSTATS\nGästezufriedenheit ${report.satisfaction} · Fassung ${report.composure} · Effizienz ${report.efficiency}`}</pre>
+        <pre className="mt-6 whitespace-pre-wrap rounded-[1.5rem] bg-wood p-5 font-mono text-sm leading-relaxed text-cream shadow-inner shadow-black/20">{`NEU IN DIESER SCHICHT\n+ Erfahrung gesammelt. Viel Erfahrung.\n\nBEHOBEN\n${report.patchLines.map((line) => `✓ ${line}`).join('\n')}\n\nBEKANNTE FEHLER\n${knownIssues}\n\nSTATS\nGästezufriedenheit ${report.satisfaction} · Fassung ${report.composure} · Effizienz ${report.efficiency}`}</pre>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button type="button" onClick={onRestart} className="min-h-14 rounded-2xl bg-brass px-6 font-display text-xl font-black text-ink active:scale-95">
