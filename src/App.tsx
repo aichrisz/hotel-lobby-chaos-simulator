@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { feedbackFor } from './content/feedback'
 import { categoryLabels, pressureLabels, type LobbyScenario, type OptionId } from './content/lobbyScenarios'
-import { buildReport, chooseOption, currentScenario, formatClock, initialShiftState, orderedOptions, tickClock, type AnsweredCard, type Pacing, type ShiftMode, type ShiftState } from './engine/shiftEngine'
+import { familyIdForScenario } from './content/scenarioVariants'
+import { spaetQueueCards } from './content/spaetScenarios'
+import { buildReport, chooseOption, choosePriority, currentScenario, formatClock, initialShiftState, orderedOptions, tickClock, type AnsweredCard, type Pacing, type ShiftMode, type ShiftState } from './engine/shiftEngine'
 
 type Screen = 'title' | 'desk' | 'report' | 'caseStudy'
 
@@ -9,12 +11,16 @@ const lessonFor: Record<ShiftMode, string> = {
   promise: 'Janjikan kabar yang bisa kamu tepati; jangan menjamin hasil yang belum diperiksa.',
   frueh: 'Dengarkan kebutuhan tamu, lalu tawarkan langkah yang benar-benar bisa dilakukan.',
   nacht: 'Akui masalah dengan tenang, periksa fakta, dan jelaskan langkah berikutnya.',
+  spaet: 'Pilih siapa yang dilayani lebih dulu; satu jawaban layanan memajukan adegan satu giliran.',
+  surprise: 'Hadapi lima keluarga kasus pagi yang berbeda dalam urutan acak.',
 }
 
 const modeChoices: { mode: ShiftMode; label: string; german: string; detail: string }[] = [
   { mode: 'promise', label: 'Janji kepada tamu', german: 'Das Versprechen', detail: '1 tamu · 2 pertemuan' },
   { mode: 'frueh', label: 'Shift pagi', german: 'Frühschicht', detail: '12 kartu' },
   { mode: 'nacht', label: 'Shift malam', german: 'Nachtschicht', detail: '4 kartu' },
+  { mode: 'spaet', label: 'Spätschicht', german: 'Spätschicht', detail: '3 pertemuan · pilih prioritas' },
+  { mode: 'surprise', label: 'Shift kejutan', german: 'Überraschung', detail: '5 kasus acak dari latihan pagi' },
 ]
 
 function newRunSeed(): number {
@@ -23,6 +29,16 @@ function newRunSeed(): number {
 
 function deltaLabel(label: string, delta: number): string {
   return `${label} ${delta > 0 ? '+' : ''}${delta}`
+}
+
+function shiftNoteFor(scenario: LobbyScenario, selectedOptionId?: OptionId): { text: string; language: 'de' | 'id' } {
+  if (!scenario.evidenceByOption) return { text: scenario.shiftReportLine, language: 'de' }
+  return {
+    text: selectedOptionId
+      ? scenario.evidenceByOption[selectedOptionId].factId
+      : 'Hasil adegan dicatat setelah jawaban dipilih.',
+    language: 'id',
+  }
 }
 
 function App() {
@@ -35,14 +51,14 @@ function App() {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [documentVisible, setDocumentVisible] = useState(() => !document.hidden)
-  const phaseRef = useRef<'choose' | 'feedback' | 'report'>('choose')
+  const phaseRef = useRef<'priority' | 'choose' | 'feedback' | 'report'>('choose')
   const leaveTriggerRef = useRef<HTMLButtonElement | null>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const firstRenderRef = useRef(true)
   const activeScenario = feedback?.scenario ?? currentScenario(shift)
   const isNight = shift.mode === 'nacht' && (screen === 'desk' || screen === 'report')
   const presentationKey = screen === 'desk'
-    ? `desk-${shift.scenarioIndex}-${feedback?.scenario.id ?? ''}-${feedback?.option.id ?? ''}`
+    ? `desk-${shift.phase}-${shift.scenarioIndex}-${shift.selectedGuest ?? ''}-${feedback?.scenario.id ?? ''}-${feedback?.option.id ?? ''}`
     : screen
 
   useEffect(() => {
@@ -81,9 +97,9 @@ function App() {
     }
   }, [feedback, screen, shift.done])
 
-  function startShift(mode: ShiftMode, selectedPacing = pacing) {
-    const nextShift = initialShiftState(mode, undefined, selectedPacing, newRunSeed())
-    phaseRef.current = 'choose'
+  function startShift(mode: ShiftMode, selectedPacing = pacing, manifest?: ShiftState['manifest']) {
+    const nextShift = initialShiftState(mode, undefined, selectedPacing, manifest?.seed ?? newRunSeed(), manifest)
+    phaseRef.current = mode === 'spaet' ? 'priority' : 'choose'
     setShift(nextShift)
     setPacing(selectedPacing)
     setFeedback(null)
@@ -101,6 +117,14 @@ function App() {
     phaseRef.current = 'feedback'
     setShift(next)
     setFeedback(next.answered.at(-1) ?? null)
+  }
+
+  function chooseGuest(guest: 'taxi' | 'family') {
+    if (phaseRef.current !== 'priority' || screen !== 'desk' || shift.done) return
+    const next = choosePriority(shift, guest)
+    if (next === shift) return
+    phaseRef.current = 'choose'
+    setShift(next)
   }
 
   function nextGuest() {
@@ -141,7 +165,7 @@ function App() {
   }
 
   function replay() {
-    startShift(shift.mode, shift.pacing)
+    startShift(shift.mode, shift.pacing, shift.mode === 'spaet' ? shift.manifest : undefined)
   }
 
   return (
@@ -150,12 +174,12 @@ function App() {
       className={`min-h-dvh ${isNight ? 'bg-night text-cream' : 'bg-[radial-gradient(circle_at_top_left,#fff8e7_0,#e8dbc3_44%,#bdc7b9_100%)] text-ink'}`}
     >
       <div className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-4 px-3 py-3 sm:px-6 sm:py-5">
-        <header className={`flex min-h-14 items-center justify-between gap-3 rounded-3xl border px-3 py-2 shadow-lg sm:px-4 ${isNight ? 'border-white/15 bg-night/95 shadow-black/20' : 'border-white/80 bg-cream/95 shadow-wood/10'}`}>
+        <header className={`flex min-h-14 flex-wrap items-center justify-between gap-3 rounded-3xl border px-3 py-2 shadow-lg sm:px-4 ${isNight ? 'border-white/15 bg-night/95 shadow-black/20' : 'border-white/80 bg-cream/95 shadow-wood/10'}`}>
           <div className="flex min-w-0 items-center gap-3">
             <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-2xl bg-wood font-display text-xl font-black text-cream">H</span>
             <div className="min-w-0">
               <p className="truncate font-display text-lg font-black leading-tight">Hotel Ostseeblick</p>
-              <p className={`text-xs font-bold ${isNight ? 'text-cream/75' : 'text-wood/80'}`}>Latihan resepsionis bahasa Jerman</p>
+              <p className={`truncate text-xs font-bold ${isNight ? 'text-cream/75' : 'text-wood/80'}`}>Latihan resepsionis bahasa Jerman</p>
             </div>
           </div>
           {screen === 'desk' && (
@@ -193,6 +217,9 @@ function App() {
             onSelectShift={selectShift}
             onCaseStudy={() => setScreen('caseStudy')}
           />
+        )}
+        {screen === 'desk' && shift.mode === 'spaet' && shift.phase === 'priority' && (
+          <PriorityScreen refHeading={headingRef} shift={shift} onChooseGuest={chooseGuest} />
         )}
         {screen === 'desk' && activeScenario && (
           <DeskScreen
@@ -302,6 +329,36 @@ function TitleScreen({
   )
 }
 
+function PriorityScreen({ refHeading, shift, onChooseGuest }: {
+  refHeading: React.RefObject<HTMLHeadingElement | null>
+  shift: ShiftState
+  onChooseGuest: (guest: 'taxi' | 'family') => void
+}) {
+  const variant = shift.manifest.episodeVariant ?? 'taxi-urgent'
+  const cards = spaetQueueCards(variant)
+  return (
+    <section className="mx-auto grid w-full min-w-0 max-w-3xl flex-1 content-start gap-3 py-1 sm:py-4" lang="id">
+      <article className="min-w-0 rounded-[1.75rem] border border-white/90 bg-cream/95 p-4 shadow-xl shadow-wood/10 sm:p-6">
+        <p className="text-sm font-extrabold text-wood">Spätschicht · Pilih prioritas · 3 pertemuan</p>
+        <h2 ref={refHeading} tabIndex={-1} className="scroll-mt-3 mt-1 break-words font-display text-3xl font-black leading-tight text-ink sm:text-4xl">Siapa yang kamu layani dulu?</h2>
+        <p className="mt-2 text-base font-semibold leading-relaxed text-ink/90">Satu jawaban layanan memajukan adegan satu giliran; memilih dan membaca tidak.</p>
+        <div className="mt-4 grid min-w-0 gap-3">
+          {cards.map((card) => (
+            <button key={card.guestId} type="button" data-priority-guest={card.guestId}
+              onClick={() => onChooseGuest(card.guestId)}
+              className="grid min-h-32 w-full min-w-0 grid-cols-1 gap-2 rounded-2xl border border-wood/20 bg-white p-4 text-left shadow-sm transition-colors hover:bg-[#fffdf6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brass/60">
+              <span className="break-words font-display text-lg font-black text-wood">Layani {card.labelId.toLowerCase()} lebih dulu</span>
+              <span lang="de" className="break-words text-base font-extrabold leading-relaxed text-ink">{card.guestLineDe}</span>
+              <span className="break-words text-sm font-semibold leading-relaxed text-wood">{card.deadlineId}</span>
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-sm font-semibold text-wood">Hotel, tamu, dan situasinya fiktif. Batas ini adalah aturan adegan permainan, bukan durasi layanan nyata.</p>
+      </article>
+    </section>
+  )
+}
+
 function DeskScreen({
   refHeading,
   shift,
@@ -328,16 +385,18 @@ function DeskScreen({
   const satisfactionBefore = before?.satisfactionAfter ?? 70
   const composureBefore = before?.composureAfter ?? 100
   const progressIndex = feedback ? shift.scenarioIndex : shift.scenarioIndex + 1
-  const isPromise = shift.mode === 'promise'
   const isNight = shift.mode === 'nacht'
   const isReturning = scenario.id.startsWith('promise-return-')
+  const shiftNote = shiftNoteFor(scenario, feedback?.option.id)
 
   return (
     <section className="grid flex-1 content-start gap-3 py-1 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:py-3">
-      <div data-scenario-id={scenario.id} className={`rounded-[1.75rem] border p-4 shadow-xl sm:p-6 ${shift.mode === 'nacht' ? 'border-white/15 bg-[#354a73] text-cream shadow-black/20' : 'border-white/90 bg-cream/95 text-ink shadow-wood/10'}`}>
+      <div data-scenario-id={scenario.id} data-family-id={familyIdForScenario(scenario)} className={`rounded-[1.75rem] border p-4 shadow-xl sm:p-6 ${shift.mode === 'nacht' ? 'border-white/15 bg-[#354a73] text-cream shadow-black/20' : 'border-white/90 bg-cream/95 text-ink shadow-wood/10'}`}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-current/10 pb-3">
           <p className={`text-sm font-extrabold ${isNight ? 'text-cream' : 'text-wood/85'}`} lang="id">
-            {isPromise ? `Pertemuan ${progressIndex} dari ${shift.scenarios.length}` : `Kartu ${progressIndex} dari ${shift.scenarios.length}`}
+            {shift.mode === 'promise' || shift.mode === 'spaet'
+              ? `Pertemuan ${progressIndex} dari ${shift.manifest.scheduledCount}`
+              : `Kartu ${progressIndex} dari ${shift.manifest.scheduledCount}`}
           </p>
           <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
             <span lang="de" className="rounded-full bg-cream px-3 py-1 text-ink">{categoryLabels[scenario.category]} · {pressureLabels[scenario.pressure]}</span>
@@ -359,6 +418,13 @@ function DeskScreen({
           <>
             <div className={`mt-3 border-l-4 border-brass/70 pl-3 ${isNight ? 'text-cream' : 'text-ink'}`} lang="id">
               <p className="text-base font-semibold leading-relaxed"><span className={`font-black ${isNight ? 'text-cream' : 'text-wood'}`}>Konteks · </span>{scenario.situationId}</p>
+              {shift.mode === 'spaet' && shift.pendingGuest && shift.scenarioIndex < 2 && (
+                <p className="mt-2 rounded-xl bg-white/80 p-3 text-base font-bold leading-relaxed text-ink">
+                  {shift.scenarioIndex === 0 ? 'Tamu yang menunggu: ' : 'Tamu yang tadi menunggu sekarang dilayani: '}
+                  {shift.pendingGuest === 'taxi' ? 'tamu taksi.' : 'orang tua dan anak.'}
+                  {shift.scenarioIndex === 0 ? ' Satu layanan selesai akan memajukan adegan.' : ''}
+                </p>
+              )}
               <p className={`mt-1 text-sm font-semibold leading-relaxed ${isNight ? 'text-cream/85' : 'text-wood/85'}`}>Hotel Ostseeblick fiktif; contoh ini bukan SOP hotel atau aturan pemberi kerja.</p>
             </div>
             <div className="mt-3 grid gap-2.5" aria-label="Pilihan respons dalam bahasa Jerman">
@@ -405,7 +471,7 @@ function DeskScreen({
             <dt>Keputusan dicatat</dt><dd className="text-right font-extrabold">{shift.answered.length}</dd>
             {shift.pacing === 'challenge' && <><dt>Waktu tersisa</dt><dd className="text-right font-extrabold tabular-nums">{formatClock(shift.remainingSeconds)}</dd></>}
           </dl>
-          <p className="mt-3 rounded-xl bg-white/80 p-3 text-ink/85" lang="de">{scenario.shiftReportLine}</p>
+          <p className="mt-3 rounded-xl bg-white/80 p-3 text-ink/85" lang={shiftNote.language}>{shiftNote.text}</p>
           <p className="mt-2 text-xs leading-relaxed text-wood/85">
             {shift.pacing === 'challenge'
               ? 'Waktu membaca berjalan; jawaban juga mengurangi waktu sesuai biayanya. Jam berhenti saat bantuan atau detail shift terbuka dan ketika tab disembunyikan.'
@@ -435,6 +501,7 @@ function FeedbackPanel({
   const bestOption = scenario.options.find((option) => option.id === scenario.bestOptionId)
   const finalAnswer = shift.done
   const positive = feedback.wasBest
+  const shiftNote = shiftNoteFor(scenario, feedback.option.id)
   return (
     <section className="mt-4 rounded-[1.5rem] border border-brass/30 bg-[#fffaf0] p-4 text-ink shadow-md sm:p-5" lang="id" aria-labelledby="feedback-title">
       <p className="text-sm font-black uppercase tracking-[0.12em] text-wood">{positive ? 'Pilihan sesuai konteks' : 'Ada pilihan yang lebih tepat'}</p>
@@ -448,6 +515,11 @@ function FeedbackPanel({
         <span>{positive ? 'Tamu mengangguk kecil; bel meja kembali diam.' : 'Tamu tampak ragu; bel meja berdenting pelan.'}</span>
       </div>
       <p className="mt-3 text-base font-bold leading-relaxed text-ink">{feedbackFor(scenario.id, feedback.option.id)}</p>
+      {shift.mode === 'spaet' && shift.episodeFacts.at(-1) && (
+        <p className="mt-3 rounded-xl bg-cream p-3 text-base font-extrabold leading-relaxed text-ink" data-testid="episode-consequence">
+          Perubahan adegan · {shift.episodeFacts.at(-1)}
+        </p>
+      )}
       <div className="mt-3 flex flex-wrap gap-2" aria-label="Perubahan nilai">
         <span className="rounded-full bg-wood px-3 py-1.5 text-sm font-extrabold text-cream">{deltaLabel('Kepuasan', satisfactionDelta)}</span>
         <span className="rounded-full bg-wood px-3 py-1.5 text-sm font-extrabold text-cream">{deltaLabel('Ketenangan', composureDelta)}</span>
@@ -462,7 +534,7 @@ function FeedbackPanel({
               <p lang="de" className="mt-1 text-base font-bold">{bestOption.textDe}</p>
             </div>
           )}
-          <p lang="de" className="rounded-xl bg-wood p-3 text-cream">{scenario.shiftReportLine}</p>
+          <p lang={shiftNote.language} className="rounded-xl bg-wood p-3 text-cream">{shiftNote.text}</p>
         </div>
       </details>
       <button type="button" onClick={onNext} className="mt-4 min-h-14 w-full rounded-2xl bg-brass px-5 py-3 font-display text-xl font-black text-ink shadow-sm transition-colors hover:bg-[#d5a342] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-night/50">
@@ -482,14 +554,39 @@ function ReportScreen({ refHeading, shift, onReplay, onPickShift }: {
   const relaxed = shift.pacing === 'relaxed'
   const completionText = shift.finishReason === 'timeout'
     ? `Waktu tantangan habis setelah ${report.answeredCount} keputusan.`
-    : `${report.answeredCount} dari ${report.scenarioCount} ${shift.mode === 'promise' ? 'pertemuan' : 'kartu'} selesai.`
+    : `${report.answeredCount} dari ${report.scenarioCount} ${shift.mode === 'promise' || shift.mode === 'spaet' ? 'pertemuan' : 'kartu'} selesai.`
+  const shiftName = shift.mode === 'promise' ? 'Das Versprechen'
+    : shift.mode === 'nacht' ? 'Nachtschicht'
+      : shift.mode === 'spaet' ? 'Spätschicht'
+        : shift.mode === 'surprise' ? 'Überraschung · latihan pagi'
+          : 'Frühschicht'
+  const outcomeCopy = report.storyOutcome === 'lobby-smooth'
+    ? { title: 'Lobi lancar', body: 'Ketiga pertemuan selesai dengan langkah yang didukung fakta dan batas adegan terpenuhi.' }
+    : report.storyOutcome === 'recovered'
+      ? { title: 'Shift dipulihkan', body: 'Satu batas waktu adegan terlewat, lalu kebutuhan yang tersisa mendapat langkah pemulihan yang jelas.' }
+      : report.storyOutcome === 'open'
+        ? { title: 'Ada urusan terbuka', body: 'Sedikitnya satu kebutuhan belum ditangani atau diberi kepastian yang belum didukung.' }
+        : report.storyOutcome === 'timeout'
+          ? { title: 'Waktu tantangan habis', body: 'Hanya layanan yang benar-benar dikomit yang dicatat; tamu lain tidak dianggap selesai.' }
+          : null
 
   return (
     <section className="grid flex-1 content-start place-items-center py-1 sm:py-4">
       <div className="w-full min-w-0 max-w-3xl rounded-[1.75rem] border border-white/90 bg-cream/97 p-5 text-ink shadow-xl shadow-wood/15 sm:p-8">
-        <p className="font-bold text-wood">{shift.mode === 'promise' ? 'Das Versprechen' : shift.mode === 'nacht' ? 'Nachtschicht' : 'Frühschicht'}</p>
+        <p className="font-bold text-wood">{shiftName}</p>
         <h2 ref={refHeading} tabIndex={-1} className="scroll-mt-3 mt-1 break-words font-display text-3xl font-black leading-tight sm:text-4xl">Pelajaran dibawa pulang</h2>
         <p className="mt-2 text-base font-extrabold text-wood">{completionText}</p>
+        {outcomeCopy && (
+          <section className="mt-4 rounded-2xl border border-brass/30 bg-white/80 p-4" data-testid="episode-outcome" aria-labelledby="episode-outcome-title">
+            <h3 id="episode-outcome-title" className="font-display text-xl font-black">{outcomeCopy.title}</h3>
+            <p className="mt-1 text-base font-semibold leading-relaxed">{outcomeCopy.body}</p>
+            {shift.mode === 'spaet' && report.patchLines.length > 0 && (
+              <ul className="mt-2 list-inside list-disc space-y-1 text-sm font-semibold leading-relaxed">
+                {report.patchLines.map((line) => <li key={line}>{line}</li>)}
+              </ul>
+            )}
+          </section>
+        )}
         <div className="mt-4 rounded-2xl bg-white/75 p-4 ring-1 ring-wood/10" lang="id">
           <h3 className="font-display text-lg font-black">Yang bisa kamu bawa ke percakapan berikutnya</h3>
           <p className="mt-1 text-base font-semibold leading-relaxed text-ink">{lessonFor[shift.mode]}</p>
@@ -520,7 +617,7 @@ function ReportScreen({ refHeading, shift, onReplay, onPickShift }: {
           </div>
         </details>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          <button type="button" onClick={onReplay} className="min-h-14 rounded-2xl bg-brass px-5 py-3 font-display text-lg font-black text-ink shadow-sm transition-colors hover:bg-[#d5a342] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-night/50">Coba jawaban lain</button>
+          <button type="button" onClick={onReplay} className="min-h-14 rounded-2xl bg-brass px-5 py-3 font-display text-lg font-black text-ink shadow-sm transition-colors hover:bg-[#d5a342] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-night/50">{shift.mode === 'spaet' ? 'Coba urutan lain' : 'Coba jawaban lain'}</button>
           <button type="button" onClick={onPickShift} className="min-h-14 rounded-2xl border border-wood/20 bg-white px-5 py-3 font-display text-lg font-black text-wood transition-colors hover:bg-cream focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brass/50">Pilih shift</button>
         </div>
       </div>

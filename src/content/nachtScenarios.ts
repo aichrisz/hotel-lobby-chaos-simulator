@@ -102,8 +102,8 @@ export const nachtScenarios: LobbyScenario[] = [
     category: 'system',
     pressure: 'system',
     guestLineDe: '„Es ist drei Uhr und die Kaffeemaschine macht nur noch ein Geräusch. Haben Sie vielleicht einen Tipp?“',
-    situationEn: 'At 03:00, a fictional coffee-machine failure becomes the most important incident in the building.',
-    situationId: 'Jam 03:00, mesin kopi fiktif rusak dan mendadak menjadi insiden paling penting di gedung.',
+    situationEn: 'In this standalone 03:00 drill, a fictional coffee-machine failure becomes the most important incident in the building.',
+    situationId: 'Dalam latihan mandiri pukul 03:00 ini, mesin kopi fiktif rusak dan mendadak menjadi insiden paling penting di gedung.',
     options: [
       {
         id: 'a',

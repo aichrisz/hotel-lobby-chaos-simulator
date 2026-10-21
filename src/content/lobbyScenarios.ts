@@ -23,6 +23,11 @@ export interface ResponseOption {
   tags: string[]
 }
 
+export interface ScenarioEvidence {
+  status: 'clear' | 'open'
+  factId: string
+}
+
 export interface LobbyScenario {
   id: string
   category: Category
@@ -35,6 +40,7 @@ export interface LobbyScenario {
   rationaleId: string
   shiftReportLine: string
   tags: string[]
+  evidenceByOption?: Record<OptionId, ScenarioEvidence>
 }
 
 export const lobbyScenarios: LobbyScenario[] = 
@@ -44,8 +50,8 @@ export const lobbyScenarios: LobbyScenario[] =
     "category": "info",
     "pressure": "low",
     "guestLineDe": "„Entschuldigung, bis wann gibt es Frühstück? Mein Mann schläft noch, aber ohne Kaffee wird das heute nichts.\"",
-    "situationEn": "A sleepy guest asks about breakfast hours. Easiest question of the shift — the warm-up card.",
-    "situationId": "Tamu yang masih ngantuk tanya jam sarapan. Kartu pemanasan — pertanyaan paling gampang di shift ini.",
+    "situationEn": "A sleepy guest asks about breakfast hours. The question is simple; the shuffled card order does not imply a warm-up sequence.",
+    "situationId": "Tamu yang masih ngantuk tanya jam sarapan. Pertanyaannya sederhana; urutan kartu latihan ini tidak menandakan urutan kejadian.",
     "options": [
       {
         "id": "a",
@@ -424,7 +430,7 @@ export const lobbyScenarios: LobbyScenario[] =
     ],
     "bestOptionId": "a",
     "rationaleId": "Saat sistem fiktif ini berhenti, tamu tetap perlu tahu apa yang sedang terjadi. Catatan sementara dan penjelasan yang jujur menjaga urusannya bergerak. Menunggu tanpa bicara membuat tamu dan antrean tidak tahu langkah berikutnya; menutup percakapan tanpa alternatif juga tidak menyelesaikan kebutuhan.",
-    "shiftReportLine": "PMS-Absturz 06:52. Papier-Backup deployed. Datenverlust: 0. Nervenverlust: moderat.",
+    "shiftReportLine": "PMS-Absturz. Papier-Backup deployed. Datenverlust: 0. Nervenverlust: moderat.",
     "tags": [
       "system",
       "system"

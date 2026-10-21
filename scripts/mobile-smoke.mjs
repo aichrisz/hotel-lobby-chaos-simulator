@@ -253,11 +253,14 @@ async function testAllRelaxedPacksAndFeedback() {
     await page.goto(baseUrl, { waitUntil: 'networkidle' })
     if (mode.id === 'promise') await page.getByRole('button', { name: /Mulai cerita singkat/i }).click()
     else await openMode(page, mode.label)
-    const expectedScenario = mode.id === 'promise' ? 'promise-guest-start' : mode.id === 'frueh' ? 'fruehstueckszeiten-frage' : 'nacht-verpaetete-ankunft'
-    assert.equal(await page.locator('[data-scenario-id]').getAttribute('data-scenario-id'), expectedScenario)
+    if (mode.id === 'promise') {
+      assert.equal(await page.locator('[data-scenario-id]').getAttribute('data-scenario-id'), 'promise-guest-start')
+    }
     assert.equal(await page.getByText(/Belajar santai · tanpa timer/i).count(), 1)
 
+    const seenFamilies = []
     for (let index = 0; index < mode.count; index += 1) {
+      seenFamilies.push(await page.locator('[data-family-id]').getAttribute('data-family-id'))
       await page.locator('[data-option-id="a"]').click()
       assert.equal(await page.getByRole('heading', { name: 'Pilihanmu', level: 2 }).count(), 1, `${mode.id} answer ${index + 1} feedback missing`)
       if (mode.id === 'promise' && index === 0) await capture(page, 'promise-playful-response')
@@ -307,6 +310,7 @@ async function testAllRelaxedPacksAndFeedback() {
         if (mode.id === 'nacht') await capture(page, 'night-report')
       }
     }
+    if (mode.id !== 'promise') assert.equal(new Set(seenFamilies).size, mode.count, `${mode.id} should visit every family exactly once`)
     await page.close()
   }
   assert.ok(nightReportContrastMetrics, 'night report contrast must be measured')
@@ -352,9 +356,21 @@ async function testPromiseA11yAndClampedDelta() {
   assert.equal(nightContext.disclaimer.fontSize, '14px')
   assert.ok(nightContext.context.ratio >= 4.5, `night context contrast below 4.5:1: ${JSON.stringify(nightContext.context)}`)
   assert.ok(nightContext.disclaimer.ratio >= 4.5, `night disclaimer contrast below 4.5:1: ${JSON.stringify(nightContext.disclaimer)}`)
+  const nightScenarioId = await night.locator('[data-scenario-id]').getAttribute('data-scenario-id')
+  const expectedNightDeltas = {
+    'nacht-verpaetete-ankunft': [-5, 0],
+    'nacht-flur-geraeusch': [-10, 0],
+    'nacht-fruehes-taxi': [5, -5],
+    'nacht-fruehes-taxi-abholort': [5, -5],
+    'nacht-kaffeemaschine-0300': [0, -5],
+  }
+  const expectedNightDelta = expectedNightDeltas[nightScenarioId]
+  assert.ok(expectedNightDelta, `unknown randomized first night card: ${nightScenarioId}`)
   await night.locator('[data-option-id="b"]').click()
-  assert.equal(await night.getByText('Kepuasan -5').count(), 1, 'incorrect night response satisfaction delta must reflect the actual clamped score change')
-  assert.equal(await night.getByText('Ketenangan 0').count(), 1, 'incorrect night response composure delta must reflect the actual clamped score change')
+  const satisfactionLabel = `Kepuasan ${expectedNightDelta[0] > 0 ? '+' : ''}${expectedNightDelta[0]}`
+  const composureLabel = `Ketenangan ${expectedNightDelta[1] > 0 ? '+' : ''}${expectedNightDelta[1]}`
+  assert.equal(await night.getByText(satisfactionLabel).count(), 1, 'incorrect night response satisfaction delta must reflect the selected authored scenario')
+  assert.equal(await night.getByText(composureLabel).count(), 1, 'incorrect night response composure delta must reflect the selected authored scenario')
   assert.equal(await night.getByTestId('guest-reaction').textContent(), 'Tamu tampak ragu; bel meja berdenting pelan.')
   const nightContrast = await night.locator('section[aria-labelledby="feedback-title"] p.mt-3.text-base.font-bold.leading-relaxed').evaluate((node) => {
     const text = getComputedStyle(node).color
@@ -527,7 +543,7 @@ async function testLeaveConfirmationAndModeSwitch() {
   const nightChoice = page.getByRole('button', { name: /Shift malam.*Nachtschicht/i })
   assert.equal(await nightChoice.count(), 1, 'Accept must expose the shift picker')
   await nightChoice.click()
-  assert.equal(await page.locator('[data-scenario-id="nacht-verpaetete-ankunft"]').count(), 1, 'picker must start the selected alternate mode')
+  assert.match(await page.locator('[data-scenario-id]').getAttribute('data-scenario-id'), /^nacht-/, 'picker must start a selected-night-pack encounter regardless of random order')
   assert.equal(await page.getByText(/Belajar santai · tanpa timer/i).count(), 1)
   await verifyGeometry(page, 'accepted-leave-selected-night-mode')
   await page.close()

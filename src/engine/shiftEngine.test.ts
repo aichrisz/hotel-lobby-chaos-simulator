@@ -22,7 +22,7 @@ describe('shiftEngine', () => {
     expect(state.done).toBe(false)
     expect(state.remainingSeconds).toBe(180)
 
-    for (const scenario of lobbyScenarios) state = chooseOption(state, scenario.bestOptionId)
+    for (const scenario of state.scenarios) state = chooseOption(state, scenario.bestOptionId)
 
     expect(state.done).toBe(true)
     expect(state.finishReason).toBe('completed')
@@ -66,7 +66,7 @@ describe('shiftEngine', () => {
 
   it('applies option effects and advances the queue', () => {
     const first = lobbyScenarios[0]
-    const state = chooseOption(initialShiftState(), first.bestOptionId)
+    const state = chooseOption(initialShiftState('frueh', [first]), first.bestOptionId)
 
     expect(state.scenarioIndex).toBe(1)
     expect(state.answered).toHaveLength(1)
@@ -78,7 +78,7 @@ describe('shiftEngine', () => {
 
   it('keeps scores clamped and builds a German-school-grade report', () => {
     let state = initialShiftState()
-    for (const scenario of lobbyScenarios) {
+    for (const scenario of state.scenarios) {
       const fastest = scenario.options.reduce((best, option) =>
         option.effects.timeCostSec < best.effects.timeCostSec ? option : best,
       )

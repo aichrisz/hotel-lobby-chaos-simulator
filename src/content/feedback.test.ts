@@ -3,6 +3,8 @@ import { lobbyScenarios } from './lobbyScenarios'
 import { nachtScenarios } from './nachtScenarios'
 import { promiseFollowupByOption, promiseScenarios } from './promiseScenarios'
 import { feedbackFor, optionFeedback } from './feedback'
+import { allAuthoredVariants } from './scenarioVariants'
+import { allSpaetScenarios } from './spaetScenarios'
 
 describe('curated response feedback', () => {
   it('covers every active encounter option with non-positional Indonesian guidance', () => {
@@ -11,6 +13,8 @@ describe('curated response feedback', () => {
       ...nachtScenarios,
       ...promiseScenarios,
       promiseFollowupByOption.b,
+      ...allAuthoredVariants(),
+      ...allSpaetScenarios(),
     ]
     const uniqueScenarios = [...new Map(scenarios.map((scenario) => [scenario.id, scenario])).values()]
 

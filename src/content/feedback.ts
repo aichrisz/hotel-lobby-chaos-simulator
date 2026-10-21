@@ -96,6 +96,61 @@ export const optionFeedback: Record<string, Record<OptionId, string>> = {
     b: 'Menyuruh tamu agar tidak kesal mengecilkan masalah dan tidak memberi bantuan.',
     c: 'Janji sepuluh menit yang belum diverifikasi berisiko mengulang masalah kepercayaan.',
   },
+  'firmenrechnung-split-fehlende-daten': {
+    a: 'Pisahkan rincian yang sudah diketahui, catat alamat perusahaan yang belum ada, lalu terbitkan faktur setelah datanya dikonfirmasi.',
+    b: 'Alamat yang dicari dari sumber lain belum diberikan atau dikonfirmasi tamu. Jangan memasukkan data perusahaan yang belum dipastikan.',
+    c: 'Menghilangkan minibar akan membuat faktur tidak sesuai transaksi, bukan memisahkan pembayarannya.',
+  },
+  'nacht-fruehes-taxi-abholort': {
+    a: 'Catatan membuktikan permintaan pukul 04:15 diterima, tetapi tidak mencantumkan titik jemput. Pastikan lokasi sebelum memberi petunjuk.',
+    b: 'Konfirmasi permintaan tidak membuktikan bahwa taksi menunggu di pintu utama. Periksa titik jemput yang belum tercatat.',
+    c: 'Kamu mengakui catatan itu ada, tetapi belum membantu tamu memastikan lokasi penjemputan.',
+  },
+  'spaet-taxi-urgent-taxi-opening': {
+    a: 'Tagihan sudah diperiksa dalam adegan ini. Kirimkan salinannya sebelum tamu berangkat; jangan mengklaim tindakan lain.',
+    b: 'Taksi akan berangkat setelah satu layanan lain selesai. Memilih layanan ini lebih dahulu tetapi menunda tamu melewatkan kesempatan yang terlihat.',
+    c: 'Melepas tamu tanpa menyepakati langkah faktur membuat urusan pembayaran tetap terbuka.',
+  },
+  'spaet-taxi-urgent-family-opening': {
+    a: 'Kamu memulai pencarian dan belum menyatakan teddy ditemukan. Keluarga menyebut dapat menunggu satu layanan.',
+    b: 'Teddy baru tidak menggantikan boneka yang dicari keluarga.',
+    c: 'Meminta keluarga kembali nanti tidak memulai pencarian atau memberi langkah sekarang.',
+  },
+  'spaet-taxi-urgent-taxi-pending': {
+    a: 'Taksi sudah berangkat. Memeriksa ketersediaan adalah langkah pemulihan, bukan konfirmasi kendaraan pengganti.',
+    b: 'Ketersediaan dan waktu kedatangan taksi baru belum diketahui; jangan menjaminnya.',
+    c: 'Keterangan bahwa taksi masih menunggu bertentangan dengan keadaan setelah satu layanan selesai.',
+  },
+  'spaet-taxi-urgent-family-after-taxi': {
+    a: 'Keluarga tetap menunggu; pencarian teddy kini dimulai. Hasil pencarian belum diketahui.',
+    b: 'Teddy baru tidak menjawab kebutuhan akan barang yang sama.',
+    c: 'Tidak ada tenggat keluarga yang mengharuskan pencarian ditunda sampai besok.',
+  },
+  'spaet-shuttle-urgent-taxi-opening': {
+    a: 'Catatan mengonfirmasi pesanan taksi untuk besok, bukan kedatangan tepat waktu. Sementara itu, keluarga lain memiliki batas shuttle yang terlihat.',
+    b: 'Catatan tidak menjamin taksi datang tepat waktu; jangan menambah kepastian yang tidak tersedia.',
+    c: 'Catatan yang sudah tersedia dapat diperiksa sekarang; menundanya tidak membantu tamu.',
+  },
+  'spaet-shuttle-urgent-taxi-pending': {
+    a: 'Bacakan pesanan yang tercatat dan jelaskan bahwa jam kedatangan belum diketahui.',
+    b: 'Tidak ada taksi yang sedang menunggu; keberangkatan baru besok.',
+    c: 'Jam empat tidak tercantum dalam catatan dan tidak boleh dibuat-buat.',
+  },
+  'spaet-shuttle-urgent-family-opening': {
+    a: 'Pencarian dimulai sebelum shuttle berangkat, tetapi teddy belum diklaim ditemukan.',
+    b: 'Belum ada pemeriksaan yang membuktikan teddy ditemukan. Kepastian palsu dapat membuat keluarga pergi tanpa barangnya.',
+    c: 'Teddy baru bukan pengganti barang yang dicari anak itu.',
+  },
+  'spaet-shuttle-urgent-family-pending': {
+    a: 'Shuttle sudah berangkat. Kamu mengakui kehilangan kesempatan itu dan memulai pencarian sebagai langkah pemulihan.',
+    b: 'Fund belum diperiksa; jangan menyatakan teddy sudah ditemukan.',
+    c: 'Shuttle terlewat, tetapi kebutuhan keluarga masih dapat ditangani dengan memulai pencarian.',
+  },
+  'spaet-reservierung-naechte': {
+    a: 'Bandingkan konfirmasi dengan reservasi dan periksa malam kedua; ketersediaan belum dijanjikan.',
+    b: 'Ketersediaan malam kedua belum diperiksa, jadi janji dua malam tidak didukung fakta.',
+    c: 'Menolak perubahan tanpa mencocokkan catatan tidak menyelesaikan perbedaan reservasi.',
+  },
 }
 
 export function feedbackFor(scenarioId: string, optionId: OptionId): string {

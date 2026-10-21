@@ -1,26 +1,30 @@
 import { lobbyScenarios, type LobbyScenario, type OptionId, type ResponseOption } from '../content/lobbyScenarios'
-import { nachtScenarios } from '../content/nachtScenarios'
-import { promiseFollowupByOption, promiseScenarios } from '../content/promiseScenarios'
+import { promiseFollowupByOption } from '../content/promiseScenarios'
+import { familyIdForScenario } from '../content/scenarioVariants'
+import { spaetOpening, spaetPending, spaetVariantFor, type SpaetGuestId } from '../content/spaetScenarios'
+import { createRunManifest, resolveManifestScenarios, type RunManifest, type RunMode } from './runManifest'
 
 export const SHIFT_SECONDS = 180
 export const START_SATISFACTION = 70
 export const START_COMPOSURE = 100
 export const EFFECT_MULTIPLIER = 5
 
-export type ShiftMode = 'frueh' | 'nacht' | 'promise'
+export type ShiftMode = RunMode
 export type Pacing = 'relaxed' | 'challenge'
 export type FinishReason = 'completed' | 'timeout'
+export type ShiftPhase = 'priority' | 'dialogue'
+export type EpisodeOutcome = 'lobby-smooth' | 'recovered' | 'open' | 'timeout'
 
 export const shiftLabels: Record<ShiftMode, string> = {
   frueh: 'Frühschicht',
   nacht: 'Nachtschicht',
   promise: 'Mini-Schicht: Das Versprechen',
+  spaet: 'Spätschicht: Zwei Gäste, ein Empfang',
+  surprise: 'Überraschung: Fünf Morgenfälle',
 }
 
-export function scenarioPackForMode(mode: ShiftMode): LobbyScenario[] {
-  if (mode === 'nacht') return nachtScenarios
-  if (mode === 'promise') return promiseScenarios
-  return lobbyScenarios
+export function scenarioPackForMode(mode: ShiftMode, seed = 0): LobbyScenario[] {
+  return resolveManifestScenarios(createRunManifest(mode, seed))
 }
 
 export interface AnsweredCard {
@@ -36,8 +40,16 @@ export interface ShiftState {
   mode: ShiftMode
   pacing: Pacing
   shuffleSeed: number
+  manifest: RunManifest
   scenarios: LobbyScenario[]
   scenarioIndex: number
+  phase: ShiftPhase
+  selectedGuest: SpaetGuestId | null
+  pendingGuest: SpaetGuestId | null
+  waitedOneService: boolean
+  deadlineMissed: boolean
+  episodeFacts: string[]
+  episodeStatuses: Array<'clear' | 'open'>
   remainingSeconds: number
   satisfaction: number
   composure: number
@@ -58,6 +70,7 @@ export interface ShiftReport {
   answeredCount: number
   achievement: Achievement
   patchLines: string[]
+  storyOutcome: EpisodeOutcome | null
 }
 
 export interface Achievement {
@@ -72,17 +85,31 @@ export function clamp(value: number, min = 0, max = 100): number {
 
 export function initialShiftState(
   mode: ShiftMode = 'frueh',
-  scenarios = scenarioPackForMode(mode),
+  scenarios?: LobbyScenario[],
   pacing: Pacing = 'challenge',
   shuffleSeed = 0,
+  replayManifest?: RunManifest,
 ): ShiftState {
-  if (scenarios.length === 0) throw new Error('Cannot start a shift with an empty scenario pack')
+  const manifest = replayManifest ?? createRunManifest(mode, shuffleSeed)
+  const selectedScenarios = scenarios ?? resolveManifestScenarios(manifest)
+  if (selectedScenarios.length === 0) throw new Error('Cannot start a shift with an empty scenario pack')
+  const actualManifest = scenarios && !replayManifest
+    ? { ...manifest, encounterIds: selectedScenarios.map(({ id }) => id), familyIds: selectedScenarios.map(familyIdForScenario), scheduledCount: selectedScenarios.length }
+    : manifest
   return {
     mode,
     pacing,
-    shuffleSeed,
-    scenarios,
+    shuffleSeed: actualManifest.seed,
+    manifest: actualManifest,
+    scenarios: selectedScenarios,
     scenarioIndex: 0,
+    phase: mode === 'spaet' ? 'priority' : 'dialogue',
+    selectedGuest: null,
+    pendingGuest: null,
+    waitedOneService: false,
+    deadlineMissed: false,
+    episodeFacts: [],
+    episodeStatuses: [],
     remainingSeconds: SHIFT_SECONDS,
     satisfaction: START_SATISFACTION,
     composure: START_COMPOSURE,
@@ -93,7 +120,9 @@ export function initialShiftState(
 }
 
 export function currentScenario(state: ShiftState): LobbyScenario | undefined {
-  return state.done ? undefined : state.scenarios[state.scenarioIndex]
+  return state.done || (state.mode === 'spaet' && state.phase === 'priority')
+    ? undefined
+    : state.scenarios[state.scenarioIndex]
 }
 
 export function orderedOptions(scenario: LobbyScenario, seed: number, encounterIndex: number): ResponseOption[] {
@@ -128,6 +157,20 @@ export function tickClock(state: ShiftState, seconds = 1): ShiftState {
   }
 }
 
+export function choosePriority(state: ShiftState, guest: SpaetGuestId): ShiftState {
+  if (state.done || state.mode !== 'spaet' || state.phase !== 'priority') return state
+  const variantId = state.manifest.episodeVariant ?? 'taxi-urgent'
+  const pendingGuest: SpaetGuestId = guest === 'taxi' ? 'family' : 'taxi'
+  const variant = spaetVariantFor(variantId)
+  return {
+    ...state,
+    scenarios: [spaetOpening(variantId, guest), spaetPending(variantId, pendingGuest), variant.reservation],
+    phase: 'dialogue',
+    selectedGuest: guest,
+    pendingGuest,
+  }
+}
+
 export function chooseOption(state: ShiftState, optionId: OptionId): ShiftState {
   const scenario = currentScenario(state)
   if (!scenario) return state
@@ -139,38 +182,59 @@ export function chooseOption(state: ShiftState, optionId: OptionId): ShiftState 
   const remainingSeconds = state.pacing === 'challenge'
     ? Math.max(0, state.remainingSeconds - option.effects.timeCostSec)
     : state.remainingSeconds
-  const answered: AnsweredCard[] = [
-    ...state.answered,
-    {
-      scenario,
-      option,
-      wasBest: option.id === scenario.bestOptionId,
-      satisfactionAfter: satisfaction,
-      composureAfter: composure,
-      remainingSecondsAfter: remainingSeconds,
-    },
-  ]
-  const scenarios = state.mode === 'promise' && state.scenarioIndex === 0
-    ? [scenario, promiseFollowupByOption[optionId]]
-    : state.scenarios
+  const answered: AnsweredCard[] = [...state.answered, {
+    scenario, option, wasBest: option.id === scenario.bestOptionId,
+    satisfactionAfter: satisfaction, composureAfter: composure, remainingSecondsAfter: remainingSeconds,
+  }]
+  let scenarios = state.scenarios
+  let episodeFacts = state.episodeFacts
+  let episodeStatuses = state.episodeStatuses
+  let deadlineMissed = state.deadlineMissed
+  let waitedOneService = state.waitedOneService
+  if (state.mode === 'spaet') {
+    const evidence = scenario.evidenceByOption?.[optionId]
+    if (evidence) {
+      episodeFacts = [...episodeFacts, evidence.factId]
+      episodeStatuses = [...episodeStatuses, evidence.status]
+    }
+    if (state.scenarioIndex === 0) {
+      const variant = spaetVariantFor(state.manifest.episodeVariant ?? 'taxi-urgent')
+      deadlineMissed = state.selectedGuest !== variant.urgentGuest || evidence?.status === 'open'
+      waitedOneService = true
+      if (deadlineMissed) {
+        const deadline = variant.urgentGuest === 'taxi' ? 'taksi' : 'shuttle keluarga'
+        episodeFacts = [...episodeFacts, `Saat satu layanan selesai, ${deadline} berangkat sebelum kebutuhannya ditangani.`]
+      }
+      if (state.pendingGuest) scenarios = [scenario, spaetPending(variant.id, state.pendingGuest), variant.reservation]
+    }
+  }
+  if (state.mode === 'promise' && state.scenarioIndex === 0) scenarios = [scenario, promiseFollowupByOption[optionId]]
   const nextIndex = state.scenarioIndex + 1
-  const completed = nextIndex >= scenarios.length
+  const completed = nextIndex >= state.manifest.scheduledCount
   const timedOut = state.pacing === 'challenge' && remainingSeconds <= 0
-  const done = completed || timedOut
-
   return {
-    mode: state.mode,
-    pacing: state.pacing,
-    shuffleSeed: state.shuffleSeed,
+    ...state,
     scenarios,
     scenarioIndex: nextIndex,
     remainingSeconds,
     satisfaction,
     composure,
     answered,
-    done,
+    episodeFacts,
+    episodeStatuses,
+    deadlineMissed,
+    waitedOneService,
+    done: completed || timedOut,
     finishReason: completed ? 'completed' : timedOut ? 'timeout' : null,
   }
+}
+
+export function outcomeFor(state: ShiftState): EpisodeOutcome | null {
+  if (state.mode !== 'spaet') return null
+  if (state.finishReason === 'timeout') return 'timeout'
+  if (state.finishReason !== 'completed') return null
+  if (state.episodeStatuses.some((status) => status === 'open')) return 'open'
+  return state.deadlineMissed ? 'recovered' : 'lobby-smooth'
 }
 
 export function efficiencyFor(answered: AnsweredCard[], total = lobbyScenarios.length): number {
@@ -189,17 +253,20 @@ export function gradeFor(finalScore: number): ShiftReport['grade'] {
 }
 
 export function buildReport(state: ShiftState): ShiftReport {
-  const efficiency = efficiencyFor(state.answered, state.scenarios.length)
+  const scenarioCount = state.manifest.scheduledCount
+  const efficiency = efficiencyFor(state.answered, scenarioCount)
   const finalScore = Math.round(state.satisfaction * 0.4 + state.composure * 0.3 + efficiency * 0.3)
   const grade = gradeFor(finalScore)
   const achievement = achievementFor(state, grade)
   const bestLines = state.answered.filter((card) => card.wasBest).slice(-3).map((card) => card.scenario.shiftReportLine)
-  const patchLines = bestLines.length > 0 ? bestLines : ['Erfahrung gesammelt. Viel Erfahrung.']
+  const patchLines = state.mode === 'spaet'
+    ? (state.episodeFacts.length > 0 ? state.episodeFacts : ['Belum ada layanan yang dikomit saat waktu habis.'])
+    : bestLines.length > 0 ? bestLines : ['Erfahrung gesammelt. Viel Erfahrung.']
 
   return {
     mode: state.mode,
     shiftLabel: shiftLabels[state.mode],
-    scenarioCount: state.scenarios.length,
+    scenarioCount,
     satisfaction: state.satisfaction,
     composure: state.composure,
     efficiency,
@@ -208,6 +275,7 @@ export function buildReport(state: ShiftState): ShiftReport {
     answeredCount: state.answered.length,
     achievement,
     patchLines,
+    storyOutcome: outcomeFor(state),
   }
 }
 

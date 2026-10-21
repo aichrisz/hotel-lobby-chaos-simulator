@@ -38,6 +38,8 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /janji kepada tamu.*das versprechen/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /shift pagi.*frühschicht/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /shift malam.*nachtschicht/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /spätschicht/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /shift kejutan.*überraschung/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /shift malam.*nachtschicht/i }))
     expect(screen.getByText('Kartu 1 dari 4')).toBeInTheDocument()
