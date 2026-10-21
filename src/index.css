@@ -72,16 +72,69 @@
   }
 }
 
+@keyframes guest-bell {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  20%,
+  60% {
+    transform: rotate(-5deg);
+  }
+  40%,
+  80% {
+    transform: rotate(5deg);
+  }
+}
+
+.guest-bell {
+  transform-origin: 50% 0;
+  animation: guest-bell 1.6s ease-in-out 2;
+}
+
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-parchment font-body text-ink antialiased;
+  }
+
+  ::selection {
+    background: #c9932b;
+    color: #3b2f2f;
+  }
+
+  :focus-visible {
+    outline: 3px solid #2c3e66;
+    outline-offset: 3px;
+  }
+
+  summary {
+    text-underline-offset: 0.2em;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html,
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transform: none !important;
+  }
+
   .animate-shake,
   .animate-sparkle-pop,
   .animate-level-up {
+    animation: none;
+  }
+
+  .guest-bell {
     animation: none;
   }
 }

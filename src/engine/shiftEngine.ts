@@ -8,6 +8,8 @@ export const START_COMPOSURE = 100
 export const EFFECT_MULTIPLIER = 5
 
 export type ShiftMode = 'frueh' | 'nacht' | 'promise'
+export type Pacing = 'relaxed' | 'challenge'
+export type FinishReason = 'completed' | 'timeout'
 
 export const shiftLabels: Record<ShiftMode, string> = {
   frueh: 'Frühschicht',
@@ -32,6 +34,8 @@ export interface AnsweredCard {
 
 export interface ShiftState {
   mode: ShiftMode
+  pacing: Pacing
+  shuffleSeed: number
   scenarios: LobbyScenario[]
   scenarioIndex: number
   remainingSeconds: number
@@ -39,6 +43,7 @@ export interface ShiftState {
   composure: number
   answered: AnsweredCard[]
   done: boolean
+  finishReason: FinishReason | null
 }
 
 export interface ShiftReport {
@@ -65,10 +70,17 @@ export function clamp(value: number, min = 0, max = 100): number {
   return Math.max(min, Math.min(max, value))
 }
 
-export function initialShiftState(mode: ShiftMode = 'frueh', scenarios = scenarioPackForMode(mode)): ShiftState {
+export function initialShiftState(
+  mode: ShiftMode = 'frueh',
+  scenarios = scenarioPackForMode(mode),
+  pacing: Pacing = 'challenge',
+  shuffleSeed = 0,
+): ShiftState {
   if (scenarios.length === 0) throw new Error('Cannot start a shift with an empty scenario pack')
   return {
     mode,
+    pacing,
+    shuffleSeed,
     scenarios,
     scenarioIndex: 0,
     remainingSeconds: SHIFT_SECONDS,
@@ -76,11 +88,44 @@ export function initialShiftState(mode: ShiftMode = 'frueh', scenarios = scenari
     composure: START_COMPOSURE,
     answered: [],
     done: false,
+    finishReason: null,
   }
 }
 
 export function currentScenario(state: ShiftState): LobbyScenario | undefined {
   return state.done ? undefined : state.scenarios[state.scenarioIndex]
+}
+
+export function orderedOptions(scenario: LobbyScenario, seed: number, encounterIndex: number): ResponseOption[] {
+  const options = [...scenario.options]
+  let randomState = 2166136261 ^ seed ^ Math.imul(encounterIndex + 1, 0x45d9f3b)
+  for (const character of scenario.id) {
+    randomState = Math.imul(randomState ^ character.charCodeAt(0), 16777619)
+  }
+  const nextRandom = () => {
+    randomState ^= randomState << 13
+    randomState ^= randomState >>> 17
+    randomState ^= randomState << 5
+    return (randomState >>> 0) / 0x100000000
+  }
+  for (let index = options.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(nextRandom() * (index + 1))
+    ;[options[index], options[swapIndex]] = [options[swapIndex], options[index]]
+  }
+  return options
+}
+
+export function tickClock(state: ShiftState, seconds = 1): ShiftState {
+  if (state.done || state.pacing === 'relaxed' || seconds <= 0) return state
+  const remainingSeconds = Math.max(0, state.remainingSeconds - seconds)
+  if (remainingSeconds === state.remainingSeconds) return state
+  const timedOut = remainingSeconds <= 0
+  return {
+    ...state,
+    remainingSeconds,
+    done: timedOut,
+    finishReason: timedOut ? 'timeout' : state.finishReason,
+  }
 }
 
 export function chooseOption(state: ShiftState, optionId: OptionId): ShiftState {
@@ -91,7 +136,9 @@ export function chooseOption(state: ShiftState, optionId: OptionId): ShiftState 
 
   const satisfaction = clamp(state.satisfaction + option.effects.satisfaction * EFFECT_MULTIPLIER)
   const composure = clamp(state.composure + option.effects.composure * EFFECT_MULTIPLIER)
-  const remainingSeconds = Math.max(0, state.remainingSeconds - option.effects.timeCostSec)
+  const remainingSeconds = state.pacing === 'challenge'
+    ? Math.max(0, state.remainingSeconds - option.effects.timeCostSec)
+    : state.remainingSeconds
   const answered: AnsweredCard[] = [
     ...state.answered,
     {
@@ -107,10 +154,14 @@ export function chooseOption(state: ShiftState, optionId: OptionId): ShiftState 
     ? [scenario, promiseFollowupByOption[optionId]]
     : state.scenarios
   const nextIndex = state.scenarioIndex + 1
-  const done = nextIndex >= scenarios.length || remainingSeconds <= 0
+  const completed = nextIndex >= scenarios.length
+  const timedOut = state.pacing === 'challenge' && remainingSeconds <= 0
+  const done = completed || timedOut
 
   return {
     mode: state.mode,
+    pacing: state.pacing,
+    shuffleSeed: state.shuffleSeed,
     scenarios,
     scenarioIndex: nextIndex,
     remainingSeconds,
@@ -118,6 +169,7 @@ export function chooseOption(state: ShiftState, optionId: OptionId): ShiftState 
     composure,
     answered,
     done,
+    finishReason: completed ? 'completed' : timedOut ? 'timeout' : null,
   }
 }
 

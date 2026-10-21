@@ -28,7 +28,7 @@ const promiseOpening: LobbyScenario = {
     },
   ],
   bestOptionId: 'a',
-  rationaleId: 'Janji yang terbatas dan bisa ditepati lebih aman: kamu memberi waktu untuk kabar, bukan menjamin kamar yang belum bisa dipastikan. Opsi b menjanjikan hasil tanpa verifikasi dan bisa merusak kepercayaan. Opsi c mengusir tamu tanpa langkah berikutnya.',
+  rationaleId: 'Respons yang paling sesuai dalam skenario ini adalah berjanji memberi kabar pada waktu yang jelas, bukan menjamin kamar yang belum bisa dipastikan. Menjanjikan kamar siap tanpa verifikasi berisiko merusak kepercayaan; menolak tanpa arahan tidak memberi tamu langkah berikutnya.',
   shiftReportLine: 'Versprechen begrenzt, Rückmeldung verbindlich gemacht.',
   tags: ['promise', 'returning-guest'],
 }

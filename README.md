@@ -1,79 +1,75 @@
 # Hotel Lobby Chaos Simulator
 
-A mobile-first portfolio game about surviving fictional German hotel front-desk shifts: Frühschicht, compact Nachtschicht, or the optional two-encounter Mini-Schicht: Das Versprechen.
+Latihan mobile untuk memilih respons layanan dalam bahasa Jerman di Hotel Ostseeblick, sebuah hotel rekaan. Percakapan dan pilihan berbahasa Jerman; konteks, bantuan, dan penjelasan berbahasa Indonesia. Materi ini bukan SOP hotel atau kebijakan pemberi kerja.
 
-You play the desk at **Hotel Ostseeblick**: guests arrive with realistic-but-fictional hospitality chaos, you choose German responses, and every answer affects satisfaction, composure, and the 180-second shift clock. The end screen turns the run into a Life-Patch-Notes-style shift report.
+## Cara bermain
 
-## Why this project exists
+- Tombol utama memulai Das Versprechen: satu tamu, dua pertemuan yang saling terkait.
+- Belajar santai adalah tempo default: tanpa hitung mundur, dan semua kartu dapat diselesaikan.
+- Tantangan waktu bersifat opsional: 180 detik berjalan saat membaca, lalu biaya tindakan jawaban mengurangi sisa waktu. Bantuan, detail shift, dialog keluar, dan tab tersembunyi menjeda jam.
+- Pemilih shift menyediakan Das Versprechen, Frühschicht (12 kartu), dan Nachtschicht (4 kartu).
+- Respons diacak stabil per kartu untuk setiap run; ID pilihan, dampak, dan cabang tamu tetap terhubung.
+- Setelah setiap jawaban, pemain melihat kutipan yang dipilih, alasan khusus jawaban, serta perubahan nilai aktual. Jawaban terakhir juga memiliki feedback sebelum report.
+- Report belajar santai berfokus pada pelajaran dan penyelesaian; rincian skor opsional dan tidak setara dengan nilai tantangan.
+- Tidak ada akun, backend, AI saat runtime, XP, streak, atau data tamu nyata.
 
-This is a personal portfolio piece for Abel: Indonesian in Germany, Front Office Ausbildung, German practice, and AI-assisted product/design workflow — not another generic to-do app.
+## Mengapa proyek ini ada
 
-## Links
+Sebuah permainan portofolio untuk latihan bahasa Jerman lewat situasi meja resepsionis fiktif. Hotel, nama tamu, dan kejadian di dalamnya adalah rekaan.
 
-- Live demo: https://aichrisz.github.io/hotel-lobby-chaos-simulator/
-- GitHub repo: https://github.com/aichrisz/hotel-lobby-chaos-simulator
-- Written case study: [`docs/case-study.md`](docs/case-study.md)
+## Tautan
 
-## MVP features
+- Demo: https://aichrisz.github.io/hotel-lobby-chaos-simulator/
+- Repositori: https://github.com/aichrisz/hotel-lobby-chaos-simulator
+- Studi kasus: [`docs/case-study.md`](docs/case-study.md)
 
-- 12 hand-written Frühschicht scenarios + exactly 4 compact Nachtschicht scenarios
-- optional Mini-Schicht: Das Versprechen, with two encounters for the same guest and two consequence paths
-- German response choices with Indonesian explanations
-- all modes reuse the 180-second clock and scoring rules
-- satisfaction / composure / efficiency scoring
-- German school grade report
-- achievement unlock flavor
-- mobile-first warm hotel-lobby visual direction
-- no backend, no login, no runtime AI
+## Teknologi
 
-## Tech stack
-
-- Vite
-- React
-- TypeScript
+- Vite, React, TypeScript
 - Tailwind CSS v4
 - Vitest + Testing Library
-- Playwright screenshots
+- Playwright yang sudah menjadi dependency proyek
 
-## Run locally
+## Jalankan lokal
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Verification
+## Verifikasi
 
 ```bash
-npm test
+NODE_OPTIONS=--no-experimental-webstorage npm test
 npm run lint
 npm run build
-npm run screenshots
 ```
 
-If Node exposes experimental global Web Storage that conflicts with Vitest/jsdom, run tests with `NODE_OPTIONS=--no-experimental-webstorage npm test` to disable that Node global.
+Jika Node menyediakan Web Storage eksperimental yang bertabrakan dengan Vitest/jsdom, `NODE_OPTIONS=--no-experimental-webstorage` menonaktifkan global tersebut untuk tes.
 
-For the production browser regression check, after a build start `npm run preview -- --host 127.0.0.1`, then run:
+Untuk browser acceptance pada build produksi, jalankan preview pada port lokal yang kosong. Skrip menulis laporan dan screenshot ke folder evidence di luar checkout:
 
 ```bash
-PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173/ node scripts/promise-smoke.mjs
+npm run preview -- --host 127.0.0.1 --port 4178 --strictPort
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:4178/ MOBILE_QA_OUTPUT_DIR=/root/.hermes/cache/scratch/hotel-mobile-upgrade/evidence node scripts/mobile-smoke.mjs
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:4178/ PROMISE_QA_OUTPUT_DIR=/root/.hermes/cache/scratch/hotel-mobile-upgrade/evidence node scripts/promise-smoke.mjs
 ```
 
-The script checks all three initial choices at 390×844 and 320×740, the existing shifts on desktop, visible 44px buttons, overflow, and browser errors. Screenshots default to the OS temp directory (`hotel-promise-qa`); override it with `PROMISE_QA_OUTPUT_DIR=/path/to/output`. To select a system Chromium executable, optionally set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium`.
+Atur `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` untuk Chromium lain. Pada host Chromium Snap, set `TMPDIR=/root/snap/chromium/common`. Variabel `MOBILE_QA_OUTPUT_DIR` dan `PROMISE_QA_OUTPUT_DIR` mengatur lokasi screenshot/laporan smoke.
 
-## Scripts
+## Skrip
 
-| Script | What it does |
+| Skrip | Fungsi |
 |---|---|
-| `npm run dev` | Start Vite dev server |
-| `npm test` | Run Vitest test suite once |
-| `npm run test:watch` | Run Vitest in watch mode |
-| `npm run lint` | Run ESLint |
-| `npm run build` | Type-check (`tsc -b`) and build production bundle |
-| `npm run preview` | Serve production build locally |
-| `npm run screenshots` | Capture mobile/desktop Frühschicht and Nachtschicht screenshots into `docs/screenshots/` |
-| `node scripts/promise-smoke.mjs` | Production browser regression for promise branches and existing modes |
+| `npm run dev` | Server Vite untuk pengembangan |
+| `npm test` | Menjalankan seluruh tes Vitest |
+| `npm run lint` | Menjalankan ESLint |
+| `npm run build` | Type-check TypeScript dan membuat bundle produksi |
+| `npm run preview` | Menyajikan build lokal |
+| `npm run screenshots` | Screenshot viewport untuk title, encounter, feedback, report, dan malam (default `/root/.hermes/cache/scratch/hotel-mobile-upgrade/evidence/`; `SCREENSHOT_URL` dan `SCREENSHOT_OUTPUT_DIR` dapat diatur) |
+| `node scripts/promise-smoke.mjs` | Memeriksa pilihan, cabang, feedback akhir, report, dan replay promise |
+| `node scripts/mobile-smoke.mjs` | Acceptance browser untuk layar, pacing, cabang, navigasi, aksesibilitas dasar, dan report |
 
-## Privacy / domain boundary
+## Privasi dan batas domain
 
-All scenarios are fictional and use the made-up hotel name **Hotel Ostseeblick**. No TRIHOTEL branding, internal procedures, real guest data, or employer-sensitive details are included.
+Semua cerita menggunakan Hotel Ostseeblick dan tamu fiktif. Aplikasi tidak mengumpulkan data tamu, tidak menggunakan branding TRIHOTEL, dan tidak memberi panduan operasional untuk hotel nyata.

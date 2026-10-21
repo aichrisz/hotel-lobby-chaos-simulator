@@ -87,7 +87,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Jawaban a hangat dan cepat — info lengkap plus satu kalimat ramah, selesai. Opsi c manis tapi 30 detik hilang di Frühschicht untuk pertanyaan yang tidak butuh servis ekstra. Opsi b benar tapi dingin; poin gampang dibuang percuma.",
+    "rationaleId": "Jawaban yang hangat memberi jam sarapan lengkap dengan satu kalimat ramah. Tawaran mengantar kopi terdengar manis, tetapi menghabiskan waktu untuk pertanyaan yang cukup dijawab dengan informasi. Jam di papan juga benar, namun jawaban singkat bisa terasa dingin.",
     "shiftReportLine": "Kaffee-Ausgabe: stabil. Keine Abstürze gemeldet.",
     "tags": [
       "info",
@@ -143,7 +143,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Express-Check-out plus faktur via e-mail adalah prosedur resmi: cepat, sah, dan tercatat. Opsi c terasa baik hati tapi improvisasi soal pembayaran itu garis merah — nanti kamu yang panik pas kasnya tidak balance. Opsi b adil tapi kaku; antrean bisa fleksibel untuk kasus 20-detik.",
+    "rationaleId": "Dalam skenario ini, jalur check-out cepat dengan faktur melalui e-mail menjawab kebutuhan tamu dan tetap mencatat pembayaran. Membiarkan tamu pergi tanpa kesepakatan pembayaran membuat urusan belum selesai. Menjaga antrean tetap adil itu baik, tetapi taksi yang sudah menunggu perlu diakui dengan langkah yang lebih cepat.",
     "shiftReportLine": "Express-Check-out: 1× erfolgreich. Das Taxi hat gehupt. Wir nicht.",
     "tags": [
       "checkout",
@@ -198,7 +198,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Split invoice itu SOP normal di front office — makan waktu 40 detik tapi bersih dan benar. Opsi b bukan \"membantu\", itu menghilangkan item dari faktur: masalah untuk akunting dan untukmu. Opsi c melempar kerjaan yang sebenarnya kamu bisa.",
+    "rationaleId": "Dalam simulasi ini, memisahkan biaya sesuai permintaan tamu membutuhkan waktu tetapi menjaga rincian faktur tetap jelas. Menghapus item bukan pemisahan yang diminta dan membuat catatan tidak sesuai transaksi. Kasus ini juga bisa ditangani tanpa menundanya ke shift berikutnya.",
     "shiftReportLine": "Rechnungssplit ohne Drama. Die Buchhaltung schläft heute ruhig.",
     "tags": [
       "billing",
@@ -255,7 +255,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Rumus komplain: validasi + solusi + humor ringan. Opsi a kasih ketiganya dalam satu napas — croissant baru, tempat aman, dan tamu ikut ketawa. Opsi b benar secara fakta tapi salah secara pelayanan. Opsi c lucu tapi tamu tetap tanpa croissant.",
+    "rationaleId": "Keluhan kecil tetap layak ditanggapi: akui rasa kesal, tawarkan croissant pengganti, lalu gunakan humor ringan bila tamu nyaman. Fakta bahwa camar adalah satwa liar tidak mengganti kerugian tamu. Lelucon tentang kehilangan juga belum mengembalikan croissant.",
     "shiftReportLine": "Bekanntes Problem: Möwen. Status: WONTFIX. Workaround: neues Croissant.",
     "tags": [
       "complaint",
@@ -311,7 +311,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Opsi a tidak janjikan yang tidak pasti, tapi kasih rencana konkret: cek dulu, titip koper, sarapan, dikabari. Itu bedanya \"tidak bisa\" dan \"belum bisa, tapi ini yang bisa saya lakukan\". Opsi c bahaya — kamar belum dicek housekeeping bisa jadi komplain jauh lebih besar.",
+    "rationaleId": "Respons yang paling sesuai dalam skenario ini adalah memeriksa status kamar, menitipkan koper, lalu memberi kabar tanpa menjanjikan waktu yang belum pasti. Menyebut jam check-in saja belum membantu keluarga yang kelelahan. Memberi akses ke kamar yang belum diperiksa bisa menimbulkan masalah baru.",
     "shiftReportLine": "Early-Check-in-Anfrage: elegant gelöst. Frühstücksraum als Wartehalle: bewährt.",
     "tags": [
       "checkin",
@@ -367,7 +367,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Kartu kamar = akses ke barang dan privasi orang. Verifikasi nama + nomor kamar itu wajib, bukan formalitas — dan tetap bisa cepat kalau kamu bilang dulu \"sofort\". Opsi b lebih cepat 10 detik tapi kamu baru saja kasih kamar ke orang yang tidak kamu verifikasi. Opsi c: kuliah fisika bukan solusi buat orang berjubah mandi.",
+    "rationaleId": "Kartu kamar memberi akses ke barang dan privasi. Dalam skenario fiktif ini, periksa nama dan nomor kamar sebelum membuat kartu baru; praktik nyata harus mengikuti aturan hotel yang berlaku. Memberi kartu tanpa pemeriksaan lebih cepat, tetapi berisiko membuka kamar kepada orang yang salah. Penjelasan tentang kartu bisa menunggu sampai kebutuhan mendesak tamu tertangani.",
     "shiftReportLine": "Keycard neu kodiert. Bademantel-Pegel: kritisch, aber stabil.",
     "tags": [
       "keys",
@@ -423,7 +423,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Saat sistem mati, yang dinilai tamu bukan sistemnya — tapi kamu. Fallback kertas + komunikasi transparan (\"untuk Anda tidak ada yang berubah\") mengubah krisis IT jadi momen profesional. Opsi b adalah yang paling sering terjadi di dunia nyata, dan paling buruk: hening itu menular ke antrean.",
+    "rationaleId": "Saat sistem fiktif ini berhenti, tamu tetap perlu tahu apa yang sedang terjadi. Catatan sementara dan penjelasan yang jujur menjaga urusannya bergerak. Menunggu tanpa bicara membuat tamu dan antrean tidak tahu langkah berikutnya; menutup percakapan tanpa alternatif juga tidak menyelesaikan kebutuhan.",
     "shiftReportLine": "PMS-Absturz 06:52. Papier-Backup deployed. Datenverlust: 0. Nervenverlust: moderat.",
     "tags": [
       "system",
@@ -477,7 +477,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Kuncinya: janji balik telepon yang *konkret* (\"lima menit\") — bukan menolak, bukan juga meninggalkan antrean. Opsi b kelihatan rajin tapi tiga tamu di depan mata menonton kamu mengabaikan mereka 45 detik. Opsi c melempar tanggung jawab menelepon ulang ke calon tamu — reservasi bisa hilang ke hotel sebelah.",
+    "rationaleId": "Waktu panggilan balik yang konkret—lima menit dalam skenario ini—tidak menolak penelepon dan tetap menghargai tamu yang menunggu di meja. Mengambil reservasi lengkap sambil antrean bertambah membagi perhatian terlalu jauh. Meminta penelepon menghubungi lagi memindahkan seluruh beban kepadanya.",
     "shiftReportLine": "Telefon vs. Warteschlange: 1:1 unentschieden. Rückruf-Feature: funktioniert.",
     "tags": [
       "phone",
@@ -532,7 +532,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Opsi a serius menangani hal yang \"kecil\" — cek langsung + eskalasi ke housekeeping + mengulang deskripsi biar orang tuanya tahu kamu benar-benar dengar. Opsi c adalah pelajaran klasik: teddy tidak bisa diganti teddy lain, dan menyarankan itu sama dengan bilang perasaan anaknya tidak penting.",
+    "rationaleId": "Respons yang paling sesuai dalam skenario ini adalah mencari di kotak barang temuan, memberi tahu housekeeping, dan mengulang ciri teddy agar orang tuanya tahu laporannya didengar. Meminta keluarga mencoba lagi nanti belum memberi langkah yang bisa dilakukan sekarang. Teddy baru juga tidak menggantikan barang yang punya arti khusus bagi anak itu.",
     "shiftReportLine": "VIP vermisst: Teddy, braun, 1 Ohr. Suchtrupp Housekeeping: aktiviert.",
     "tags": [
       "lostfound",
@@ -587,7 +587,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Urutannya baku: minta maaf tulus → solusi konkret sekarang → analisis penyebab nanti (bukan di depan tamu). Opsi b menuduh tamu salah kamar — eskalasi dijamin. Opsi c menjelekkan kolega di depan tamu: tamu tidak peduli shift mana yang salah, dan kepercayaan ke hotel (bukan ke individu) yang rusak. Composure minus 1 di opsi a itu wajar — kasus begini memang bikin deg-degan walau ditangani benar.",
+    "rationaleId": "Dalam situasi ini, minta maaf dengan tulus, pindahkan tamu ke solusi konkret, lalu cari penyebabnya setelah kebutuhan mendesak tertangani. Mempertanyakan tamu saat ada koper asing terdengar menyalahkan; menyalahkan rekan kerja juga tidak memulihkan rasa aman. Wajar bila kejadian seperti ini terasa menegangkan meski ditangani dengan tenang.",
     "shiftReportLine": "Zimmer 217 doppelt vergeben. Hotfix: Zimmer 219. Root-Cause-Ticket: offen.",
     "tags": [
       "checkin",
@@ -643,7 +643,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Prosedur grup: tagihan ke penyelenggara (sudah disepakati sebelumnya), hitung kartu, lepas. Menghitung kartu itu 20 detik yang menyelamatkanmu dari drama \"kartu 312 hilang\" nanti siang. Opsi b teliti tapi salah momen — pemeriksaan 24 kamar bukan pekerjaan lima menit. Opsi c cepat tapi kalau ada kartu kurang, itu masalahmu sendirian.",
+    "rationaleId": "Untuk rombongan dalam skenario ini, tagihan sudah disepakati dengan penyelenggara; menghitung kartu sebelum mereka berangkat memastikan jumlahnya tercatat. Memeriksa seluruh kamar terlalu luas untuk tenggat keberangkatan. Menerima tumpukan tanpa menghitung membuat kartu yang hilang tidak terdeteksi.",
     "shiftReportLine": "24 Karten abgegeben, 24 gezählt. Statik des Kartenturms: beeindruckend.",
     "tags": [
       "checkout",
@@ -701,7 +701,7 @@ export const lobbyScenarios: LobbyScenario[] =
       }
     ],
     "bestOptionId": "a",
-    "rationaleId": "Trik terbaik front office: ubah biaya jadi benefit. Kurtaxe memang wajib, tapi kalau kamu jelaskan Gästekarte-nya (pantai gratis, bus murah), tamu merasa dapat sesuatu — bukan dipalak. Opsi c bukan cuma melanggar SOP, itu melanggar aturan pemerintah kota: Kurtaxe bukan milik hotel untuk dihapus-hapus.",
+    "rationaleId": "Dalam skenario fiktif ini, Kurtaxe dijelaskan sebagai biaya daerah dan Gästekarte sebagai manfaat yang menyertainya. Menyebut biaya wajib tanpa menjelaskan alasannya belum menjawab kebingungan tamu. Menghapus biaya tanpa dasar yang jelas bukan keputusan yang ditunjukkan dalam situasi ini.",
     "shiftReportLine": "Kurtaxe erklärt: 1×. Gästekarte als Feature verkauft, nicht als Bug.",
     "tags": [
       "billing",

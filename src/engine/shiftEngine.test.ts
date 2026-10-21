@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { lobbyScenarios, type OptionId } from '../content/lobbyScenarios'
 import { nachtScenarios } from '../content/nachtScenarios'
-import { buildReport, chooseOption, currentScenario, efficiencyFor, formatClock, gradeFor, initialShiftState } from './shiftEngine'
+import { buildReport, chooseOption, currentScenario, efficiencyFor, formatClock, gradeFor, initialShiftState, orderedOptions, tickClock } from './shiftEngine'
 
 describe('shiftEngine', () => {
   it('starts at the Hotel Lobby Chaos Simulator baseline', () => {
@@ -11,6 +11,57 @@ describe('shiftEngine', () => {
     expect(state.satisfaction).toBe(70)
     expect(state.composure).toBe(100)
     expect(state.scenarioIndex).toBe(0)
+    expect(state.pacing).toBe('challenge')
+    expect(state.finishReason).toBeNull()
+  })
+
+  it('lets relaxed learning finish every card without wall-clock or action-cost timeout', () => {
+    let state = initialShiftState('frueh', undefined, 'relaxed', 73)
+
+    state = tickClock(state, 181)
+    expect(state.done).toBe(false)
+    expect(state.remainingSeconds).toBe(180)
+
+    for (const scenario of lobbyScenarios) state = chooseOption(state, scenario.bestOptionId)
+
+    expect(state.done).toBe(true)
+    expect(state.finishReason).toBe('completed')
+    expect(state.answered).toHaveLength(12)
+    expect(state.remainingSeconds).toBe(180)
+    expect(state.answered.every((card) => card.wasBest)).toBe(true)
+  })
+
+  it('keeps challenge tick and action-cost timeout distinct and reports timeout', () => {
+    let state = initialShiftState('promise', undefined, 'challenge', 17)
+    state = tickClock(state, 1)
+    expect(state.remainingSeconds).toBe(179)
+
+    const timedOut = chooseOption({ ...state, remainingSeconds: 1 }, 'a')
+    expect(timedOut.remainingSeconds).toBe(0)
+    expect(timedOut.done).toBe(true)
+    expect(timedOut.finishReason).toBe('timeout')
+    expect(timedOut.answered).toHaveLength(1)
+
+    const expiredWhileReading = tickClock({ ...state, remainingSeconds: 1 })
+    expect(expiredWhileReading.done).toBe(true)
+    expect(expiredWhileReading.finishReason).toBe('timeout')
+    expect(expiredWhileReading.answered).toHaveLength(0)
+  })
+
+  it('keeps a seeded option order stable across ticks and routes by OptionId', () => {
+    const state = initialShiftState('promise', undefined, 'relaxed', 41)
+    const scenario = currentScenario(state)!
+    const firstOrder = orderedOptions(scenario, state.shuffleSeed, state.scenarioIndex)
+    expect(orderedOptions(scenario, state.shuffleSeed, state.scenarioIndex).map((option) => option.id))
+      .toEqual(firstOrder.map((option) => option.id))
+    expect(orderedOptions(scenario, state.shuffleSeed + 1, state.scenarioIndex).map((option) => option.id))
+      .not.toEqual(firstOrder.map((option) => option.id))
+
+    for (const option of scenario.options) {
+      const selected = chooseOption(state, option.id)
+      expect(selected.answered[0].option.id).toBe(option.id)
+      expect(selected.scenarios[1].id).toBe(option.id === 'a' ? 'promise-return-manageable' : 'promise-return-upset')
+    }
   })
 
   it('applies option effects and advances the queue', () => {
